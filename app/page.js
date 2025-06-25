@@ -32,37 +32,6 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-// Reusable styled Input component
-function Input({ label, icon: Icon, type = 'text', value, onChange, placeholder, showToggle, isVisible, onToggle, onKeyPress }) {
-  return (
-    <div className="mb-6">
-      <label className="flex items-center text-white font-semibold mb-2">
-        {Icon && <Icon className="w-5 h-5 mr-2 text-purple-300" />}
-        <span>{label}</span>
-      </label>
-      <div className="relative">
-        <input
-          type={type}
-          value={value}
-          onChange={onChange}
-          onKeyPress={onKeyPress}
-          placeholder={placeholder}
-          className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-        />
-        {showToggle && (
-          <button
-            type="button"
-            onClick={onToggle}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-1"
-          >
-            {isVisible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   const [companyName, setCompanyName] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -143,7 +112,7 @@ export default function Home() {
     }
   };
 
-  // Enhanced formatting function for better report structure
+  // Enhanced formatting function with improved resilience score detection
   const formatResult = (text) => {
     if (!text) return '';
     
@@ -153,48 +122,80 @@ export default function Home() {
     html = html.replace(/^\s*#\s*$/gm, '');
     html = html.replace(/\n\s*#\s*\n/g, '\n\n');
     
-    // Extract and format the resilience score with enhanced styling
-    html = html.replace(/(?:###\s*)?🏆\s*\*?\*?Overall Resilience Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi, (match, score) => {
-      const numScore = parseFloat(score);
-      const percentage = numScore * 10;
-      let bgGradient, scoreLabel, emoji;
+    // Enhanced resilience score detection - multiple patterns to catch various formats
+    const scorePatterns = [
+      // Pattern 1: 🏆 Overall Resilience Score: X/10
+      /(?:###\s*)?🏆\s*\*?\*?(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi,
+      // Pattern 2: Overall Resilience Score: X/10 (without emoji)
+      /(?:###\s*)?\*?\*?Overall\s+Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi,
+      // Pattern 3: Resilience Score: X/10 (shortened)
+      /(?:###\s*)?\*?\*?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi,
+      // Pattern 4: **Overall Resilience Score: X/10** (markdown emphasis)
+      /\*\*(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*\*/gi
+    ];
+
+    let scoreFound = false;
+    
+    // Try each pattern until we find a score
+    for (const pattern of scorePatterns) {
+      if (scoreFound) break;
       
-      if (numScore >= 8) {
-        bgGradient = 'from-emerald-500 to-green-600';
-        scoreLabel = 'Highly Resilient';
-        emoji = '🚀';
-      } else if (numScore >= 6) {
-        bgGradient = 'from-blue-500 to-indigo-600';
-        scoreLabel = 'Strong Position';
-        emoji = '💪';
-      } else if (numScore >= 4) {
-        bgGradient = 'from-amber-500 to-orange-600';
-        scoreLabel = 'Moderate Risk';
-        emoji = '⚠️';
-      } else {
-        bgGradient = 'from-red-500 to-red-600';
-        scoreLabel = 'High Risk';
-        emoji = '🔻';
-      }
-      
-      return `
-        <div class="my-8 p-8 rounded-2xl bg-gradient-to-br ${bgGradient} shadow-2xl text-white text-center transform hover:scale-105 transition-all duration-300">
-          <h2 class="text-3xl font-bold mb-4 flex items-center justify-center gap-3">
-            🏆 Overall Resilience Score
-          </h2>
-          <div class="text-8xl font-black mb-4 animate-pulse drop-shadow-lg">${score}/10</div>
-          <div class="text-2xl font-semibold mb-2 flex items-center justify-center gap-2">
-            ${emoji} ${scoreLabel}
-          </div>
-          <div class="text-lg opacity-90 mb-6">${percentage}% Investment Grade</div>
-          <div class="mt-6 max-w-md mx-auto">
-            <div class="w-full bg-black/20 rounded-full h-4 overflow-hidden">
-              <div class="h-full bg-white/90 rounded-full transition-all duration-2000 ease-out" style="width: ${percentage}%"></div>
+      html = html.replace(pattern, (match, score) => {
+        scoreFound = true;
+        const numScore = parseFloat(score);
+        const percentage = numScore * 10;
+        let bgGradient, scoreLabel, emoji;
+        
+        if (numScore >= 8) {
+          bgGradient = 'from-emerald-500 to-green-600';
+          scoreLabel = 'Highly Resilient';
+          emoji = '🚀';
+        } else if (numScore >= 6) {
+          bgGradient = 'from-blue-500 to-indigo-600';
+          scoreLabel = 'Strong Position';
+          emoji = '💪';
+        } else if (numScore >= 4) {
+          bgGradient = 'from-amber-500 to-orange-600';
+          scoreLabel = 'Moderate Risk';
+          emoji = '⚠️';
+        } else {
+          bgGradient = 'from-red-500 to-red-600';
+          scoreLabel = 'High Risk';
+          emoji = '🔻';
+        }
+        
+        return `
+          <div class="my-8 p-8 rounded-2xl bg-gradient-to-br ${bgGradient} shadow-2xl text-white text-center transform hover:scale-105 transition-all duration-300">
+            <h2 class="text-3xl font-bold mb-4 flex items-center justify-center gap-3">
+              🏆 Overall Resilience Score
+            </h2>
+            <div class="text-8xl font-black mb-4 animate-pulse drop-shadow-lg">${score}/10</div>
+            <div class="text-2xl font-semibold mb-2 flex items-center justify-center gap-2">
+              ${emoji} ${scoreLabel}
+            </div>
+            <div class="text-lg opacity-90 mb-6">${percentage}% Investment Grade</div>
+            <div class="mt-6 max-w-md mx-auto">
+              <div class="w-full bg-black/20 rounded-full h-4 overflow-hidden">
+                <div class="h-full bg-white/90 rounded-full transition-all duration-2000 ease-out" style="width: ${percentage}%"></div>
+              </div>
             </div>
           </div>
+        `;
+      });
+    }
+    
+    // Fallback: if no score found in any pattern, add a generic analysis header
+    if (!scoreFound && html.length > 100) {
+      const analysisTitle = `
+        <div class="my-8 p-8 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-2xl text-white text-center">
+          <h2 class="text-3xl font-bold mb-4 flex items-center justify-center gap-3">
+            📊 Investment Analysis Complete
+          </h2>
+          <div class="text-xl opacity-90">Comprehensive analysis for ${companyName}</div>
         </div>
       `;
-    });
+      html = analysisTitle + html;
+    }
     
     // Enhanced Company Overview with structured layout
     html = html.replace(/###\s*📊\s*\*?\*?Company Overview\*?\*?([\s\S]*?)(?=###|##|$)/gi, (match, content) => {
@@ -428,7 +429,7 @@ export default function Home() {
   };
 
   const shareAnalysis = async () => {
-    const scoreMatch = result.match(/Overall Resilience Score:\s*(\d+(?:\.\d+)?)\s*\/\s*10/i);
+    const scoreMatch = result.match(/(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10/i);
     const score = scoreMatch ? scoreMatch[1] : 'N/A';
     
     const shareData = {
