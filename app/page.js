@@ -23,7 +23,13 @@ import {
   Loader2,
   Copy,
   Download,
-  TrendingUp
+  TrendingUp,
+  Lock,
+  Rocket,
+  Star,
+  CheckCircle,
+  Play,
+  ArrowRight
 } from 'lucide-react';
 
 // Reusable styled Input component
@@ -76,9 +82,9 @@ export default function Home() {
   ];
 
   const tokenOptions = [
-    { value: '3000', label: 'Concise (3K tokens)', description: 'Brief analysis - fastest & lowest cost (~$0.12)' },
-    { value: '6000', label: 'Comprehensive (6K tokens)', description: 'Detailed analysis - recommended (~$0.24)' },
-    { value: '8000', label: 'Maximum Depth (8K tokens)', description: 'Most thorough - requires Claude 3.5 Sonnet (~$0.32)' }
+    { value: '3000', label: 'Concise Analysis', description: 'Quick insights', cost: '$0.12', time: '15s' },
+    { value: '6000', label: 'Comprehensive Report', description: 'Detailed analysis', cost: '$0.24', time: '25s' },
+    { value: '8000', label: 'Maximum Depth', description: 'Full research report', cost: '$0.32', time: '35s' }
   ];
 
   // Auto-adjust token limit when model changes
@@ -464,9 +470,19 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 text-white relative overflow-hidden">
       {/* Enhanced animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {/* Enhanced Background */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(120,119,198,0.3),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,119,198,0.2),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(68,200,245,0.1)_50%,transparent_75%)]"></div>
+        
+        {/* Floating Elements */}
+        <div className="absolute top-20 left-20 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60"></div>
+        <div className="absolute top-40 right-32 w-1 h-1 bg-purple-400 rounded-full animate-ping opacity-40"></div>
+        <div className="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-pink-400 rounded-full animate-pulse opacity-50"></div>
+        
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float"></div>
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-25 animate-float" style={{ animationDelay: '2s' }}></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{ animationDelay: '4s' }}></div>
@@ -537,232 +553,338 @@ export default function Home() {
         </header>
 
         {/* Enhanced main form */}
-        <main className="max-w-6xl mx-auto px-6 pb-16">
-          <div className="bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-12 relative overflow-hidden hover:shadow-purple-500/20 transition-all duration-500">
-            {/* Card decoration */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"></div>
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl"></div>
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          {/* Main Container - Stepped Card Design */}
+          <div className="relative">
+            {/* Background Cards for Depth */}
+            <div className="absolute inset-0 bg-white/5 rounded-3xl transform rotate-1 scale-105 blur-sm"></div>
+            <div className="absolute inset-0 bg-white/3 rounded-3xl transform -rotate-1 scale-102 blur-sm"></div>
             
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              analyzeCompany();
-            }} className="relative z-10">
+            {/* Main Card */}
+            <div className="relative bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
+              {/* Animated Top Border */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 via-pink-500 to-blue-500 bg-size-200 animate-gradient-shift"></div>
               
-              {/* API Key Input with enhanced styling */}
-              <div className="mb-8">
-                <label className="flex items-center text-white font-semibold mb-4 text-lg">
-                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                    <Zap className="w-5 h-5 text-white" />
-                  </div>
-                  <span>Anthropic API Key</span>
-                  <span className="ml-2 px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-medium">Required</span>
-                </label>
-                <div className="relative group">
-                  <input
-                    type={showApiKey ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="sk-ant-api03-..."
-                    className="w-full px-6 py-4 bg-white/5 border-2 border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:border-purple-400 transition-all duration-300 text-lg group-hover:border-white/30"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-all duration-200"
-                  >
-                    {showApiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
+              {/* Header Section */}
+              <div className="relative p-8 pb-6">
+                {/* Floating Icon */}
+                <div className="absolute top-4 right-4 w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/10">
+                  <Brain className="w-8 h-8 text-blue-400 animate-pulse" />
                 </div>
-                <div className="mt-3 flex items-center gap-2 text-sm text-purple-300">
-                  <Globe className="w-4 h-4" />
-                  <span>Get your API key from</span>
-                  <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" 
-                     className="text-purple-400 hover:text-purple-300 underline underline-offset-2 decoration-purple-400/50 hover:decoration-purple-300 transition-all duration-200 font-medium">
-                    console.anthropic.com
-                  </a>
-                </div>
-              </div>
-
-              {/* Company Name Input with enhanced styling */}
-              <div className="mb-8">
-                <label className="flex items-center text-white font-semibold mb-4 text-lg">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center mr-3 shadow-lg">
-                    <Building2 className="w-5 h-5 text-white" />
-                  </div>
-                  <span>Company Name</span>
-                </label>
-                <div className="relative group">
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="e.g., Apple, Microsoft, NVIDIA, Tesla, Amazon..."
-                    onKeyPress={(e) => e.key === 'Enter' && analyzeCompany()}
-                    className="w-full px-6 py-4 bg-white/5 border-2 border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-blue-400 transition-all duration-300 text-lg group-hover:border-white/30"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    <TrendingUp className="w-5 h-5 text-white/40" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Advanced Settings Toggle */}
-              <div className="flex items-center justify-between mb-8">
-                <button
-                  type="button"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center gap-3 text-purple-300 hover:text-white transition-all duration-200 group bg-white/5 hover:bg-white/10 px-4 py-3 rounded-xl border border-white/10 hover:border-white/20"
-                >
-                  <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-                  <span className="font-medium">Advanced Settings</span>
-                  <ChevronRight className={`w-4 h-4 ${showAdvanced ? 'rotate-90' : ''} transition-transform duration-300`} />
-                </button>
                 
-                {!showAdvanced && (
-                  <div className="text-sm text-white/60">
-                    Using: <span className="text-purple-300 font-medium">Claude 3.5 Sonnet</span> • 
-                    <span className="text-blue-300 font-medium"> 6K tokens</span>
-                  </div>
-                )}
+                <div className="max-w-lg">
+                  <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    AI Investment Analysis
+                  </h2>
+                  <p className="text-slate-300 text-lg">
+                    Generate professional-grade investment reports powered by advanced AI
+                  </p>
+                </div>
               </div>
 
-              {/* Enhanced Advanced Settings */}
-              {showAdvanced && (
-                <section className="mb-8 p-8 bg-gradient-to-br from-white/5 to-white/10 rounded-2xl border border-white/20 backdrop-blur-sm space-y-8 animate-fade-in">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-lg flex items-center justify-center">
-                      <Cpu className="w-4 h-4 text-white" />
+              <div className="px-8 pb-8">
+                {/* Progress Indicator */}
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      apiKey ? 'bg-green-500 text-white' : 'bg-white/20 text-white/60'
+                    }`}>
+                      {apiKey ? <CheckCircle className="w-4 h-4" /> : '1'}
                     </div>
-                    <h3 className="text-xl font-bold text-white">Advanced Configuration</h3>
+                    <span className="text-sm text-white/80">Setup</span>
                   </div>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Model Selection */}
-                    <div className="space-y-3">
-                      <label className="flex items-center text-white font-semibold mb-3">
-                        <Cpu className="w-5 h-5 mr-2 text-emerald-400" />
-                        AI Model Selection
-                      </label>
-                      <select
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition appearance-none cursor-pointer text-base"
-                      >
-                        {models.map((m) => (
-                          <option key={m.id} value={m.id} className="bg-slate-800 text-white py-2">
-                            {m.name} - {m.description}
-                          </option>
-                        ))}
-                      </select>
+                  <div className="flex-1 h-px bg-white/20 relative">
+                    <div className={`absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ${
+                      apiKey ? 'w-full' : 'w-0'
+                    }`}></div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      companyName ? 'bg-green-500 text-white' : 'bg-white/20 text-white/60'
+                    }`}>
+                      {companyName ? <CheckCircle className="w-4 h-4" /> : '2'}
                     </div>
+                    <span className="text-sm text-white/80">Company</span>
+                  </div>
+                  <div className="flex-1 h-px bg-white/20 relative">
+                    <div className={`absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500 ${
+                      companyName ? 'w-full' : 'w-0'
+                    }`}></div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      apiKey && companyName ? 'bg-gradient-to-r from-pink-500 to-orange-500 text-white animate-pulse' : 'bg-white/20 text-white/60'
+                    }`}>
+                      {apiKey && companyName ? <Play className="w-4 h-4" /> : '3'}
+                    </div>
+                    <span className="text-sm text-white/80">Analyze</span>
+                  </div>
+                </div>
 
-                    {/* Token Limit */}
-                    <div className="space-y-3">
-                      <label className="flex items-center text-white font-semibold mb-3">
-                        <Clock className="w-5 h-5 mr-2 text-blue-400" />
-                        Analysis Depth & Quality
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Left Column - Inputs */}
+                  <div className="space-y-6">
+                    {/* API Key Input */}
+                    <div className="group">
+                      <label className="block text-white font-semibold mb-3 flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-yellow-400" />
+                        API Authentication
+                        <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs">Required</span>
                       </label>
-                      <select
-                        value={tokenLimit}
-                        onChange={(e) => setTokenLimit(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition appearance-none cursor-pointer text-base"
-                      >
-                        {tokenOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value} className="bg-slate-800 text-white py-2">
-                            {opt.label} - {opt.description}
-                          </option>
-                        ))}
-                      </select>
-                      {model !== 'claude-3-5-sonnet-20241022' && parseInt(tokenLimit) > 4096 && (
-                        <div className="flex items-center gap-2 mt-2 p-3 bg-amber-500/20 border border-amber-400/30 rounded-lg">
-                          <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                          <span className="text-sm text-amber-300">8K tokens requires Claude 3.5 Sonnet for optimal performance</span>
+                      <div className="relative">
+                        <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden group-hover:border-white/30 transition-all duration-300">
+                          <input
+                            type={showApiKey ? 'text' : 'password'}
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            placeholder="sk-ant-api03-..."
+                            className="w-full px-4 py-4 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowApiKey(!showApiKey)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                          >
+                            {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
                         </div>
-                      )}
+                      </div>
+                      <div className="mt-2 flex items-center gap-2 text-sm text-yellow-300/80">
+                        <Globe className="w-3 h-3" />
+                        <span>Get your key from</span>
+                        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-300">console.anthropic.com</a>
+                      </div>
+                    </div>
+
+                    {/* Company Input */}
+                    <div className="group">
+                      <label className="block text-white font-semibold mb-3 flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-blue-400" />
+                        Target Company
+                      </label>
+                      <div className="relative">
+                        <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden group-hover:border-white/30 transition-all duration-300">
+                          <input
+                            type="text"
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            placeholder="e.g., Apple, Microsoft, NVIDIA..."
+                            onKeyPress={(e) => e.key === 'Enter' && analyzeCompany()}
+                            className="w-full px-4 py-4 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                          />
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            <TrendingUp className="w-4 h-4 text-white/40" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Analysis Options */}
+                    <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                      <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                        <Settings className="w-4 h-4 text-purple-400" />
+                        Analysis Configuration
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm text-white/80 mb-2">Report Depth</label>
+                          <div className="grid grid-cols-1 gap-2">
+                            {tokenOptions.map((option) => (
+                              <label key={option.value} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10 hover:border-white/20">
+                                <input
+                                  type="radio"
+                                  name="tokenLimit"
+                                  value={option.value}
+                                  checked={tokenLimit === option.value}
+                                  onChange={(e) => setTokenLimit(e.target.value)}
+                                  className="w-4 h-4 accent-purple-500"
+                                />
+                                <div className="flex-1">
+                                  <div className="text-white font-medium">{option.label}</div>
+                                  <div className="text-xs text-white/60">{option.description}</div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-xs text-green-400">{option.cost}</div>
+                                  <div className="text-xs text-blue-400">{option.time}</div>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Advanced Settings */}
+                    {showAdvanced && (
+                      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                        <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                          <Cpu className="w-4 h-4 text-emerald-400" />
+                          Advanced Settings
+                        </h3>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm text-white/80 mb-2">AI Model</label>
+                            <select
+                              value={model}
+                              onChange={(e) => setModel(e.target.value)}
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition appearance-none cursor-pointer text-base"
+                            >
+                              {models.map((m) => (
+                                <option key={m.id} value={m.id} className="bg-slate-800 text-white py-2">
+                                  {m.name} - {m.description}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column - Features & Actions */}
+                  <div className="space-y-6">
+                    {/* AI Model Display */}
+                    <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl p-6 border border-purple-400/20">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                          <Cpu className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold">Claude 3.5 Sonnet</h3>
+                          <p className="text-sm text-purple-300">Latest AI Model</p>
+                        </div>
+                        <div className="ml-auto flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="text-center p-3 bg-white/10 rounded-lg">
+                          <div className="text-white font-semibold">99.9%</div>
+                          <div className="text-white/60">Accuracy</div>
+                        </div>
+                        <div className="text-center p-3 bg-white/10 rounded-lg">
+                          <div className="text-white font-semibold">&lt;30s</div>
+                          <div className="text-white/60">Speed</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Features Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-center hover:bg-emerald-500/20 transition-colors">
+                        <Shield className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
+                        <div className="text-sm font-medium text-white">Risk Assessment</div>
+                      </div>
+                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center hover:bg-blue-500/20 transition-colors">
+                        <Target className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+                        <div className="text-sm font-medium text-white">Market Analysis</div>
+                      </div>
+                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 text-center hover:bg-purple-500/20 transition-colors">
+                        <Users className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+                        <div className="text-sm font-medium text-white">Competitive Intel</div>
+                      </div>
+                      <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-4 text-center hover:bg-pink-500/20 transition-colors">
+                        <Sparkles className="w-6 h-6 text-pink-400 mx-auto mb-2" />
+                        <div className="text-sm font-medium text-white">Investment Thesis</div>
+                      </div>
+                    </div>
+
+                    {/* Error Display */}
+                    {error && (
+                      <div className="flex items-center gap-3 p-5 bg-red-500/20 border-2 border-red-400/50 text-red-200 rounded-2xl backdrop-blur-sm animate-fade-in">
+                        <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <AlertCircle className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-base">{error}</span>
+                      </div>
+                    )}
+
+                    {/* Action Button */}
+                    <button
+                      onClick={analyzeCompany}
+                      disabled={!apiKey || !companyName || loading}
+                      className="w-full group relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white px-8 py-6 rounded-2xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] shadow-2xl shadow-purple-500/30 hover:shadow-purple-500/50"
+                    >
+                      {/* Background Animation */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+                      
+                      <div className="relative z-10 flex items-center justify-center gap-4">
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <span>Analyzing {companyName}...</span>
+                            <div className="flex gap-1">
+                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Rocket className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
+                            <span>Generate AI Analysis</span>
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+                          </>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Advanced Settings Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvanced(!showAdvanced)}
+                      className="w-full flex items-center justify-center gap-3 text-purple-300 hover:text-white transition-all duration-200 group bg-white/5 hover:bg-white/10 px-4 py-3 rounded-xl border border-white/10 hover:border-white/20"
+                    >
+                      <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                      <span className="font-medium">Advanced Settings</span>
+                      <ChevronRight className={`w-4 h-4 ${showAdvanced ? 'rotate-90' : ''} transition-transform duration-300`} />
+                    </button>
+
+                    {/* Trust Indicators */}
+                    <div className="flex items-center justify-center gap-6 text-xs text-white/60">
+                      <div className="flex items-center gap-1">
+                        <Shield className="w-3 h-3" />
+                        <span>Secure</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Zap className="w-3 h-3" />
+                        <span>Fast</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Award className="w-3 h-3" />
+                        <span>Professional</span>
+                      </div>
                     </div>
                   </div>
-                </section>
-              )}
-
-              {/* Error Display */}
-              {error && (
-                <div className="flex items-center gap-3 p-5 bg-red-500/20 border-2 border-red-400/50 text-red-200 rounded-2xl mb-8 backdrop-blur-sm animate-fade-in">
-                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <AlertCircle className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-base">{error}</span>
-                </div>
-              )}
-
-              {/* Enhanced Submit Button */}
-              <button
-                type="submit"
-                disabled={!apiKey || !companyName || loading}
-                className="w-full relative overflow-hidden bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 hover:from-purple-700 hover:via-blue-700 hover:to-purple-700 text-white px-8 py-5 rounded-2xl font-bold text-xl flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] shadow-2xl shadow-purple-500/30 hover:shadow-purple-500/50 group"
-              >
-                {/* Button background animation */}
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
-                
-                <div className="relative z-10 flex items-center gap-4">
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-7 h-7 animate-spin" />
-                      <span>Analyzing {companyName}...</span>
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <TrendingUp className="w-7 h-7 group-hover:scale-110 transition-transform duration-200" />
-                      <span>Generate Investment Analysis</span>
-                      <div className="w-2 h-2 bg-white rounded-full group-hover:animate-ping"></div>
-                    </>
-                  )}
-                </div>
-              </button>
-            </form>
-
-            {/* Enhanced Feature Showcase */}
-            <div className="mt-12 pt-8 border-t border-white/20">
-              <h3 className="text-center text-lg font-semibold text-white mb-6">Platform Capabilities</h3>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="group bg-gradient-to-br from-emerald-500/20 to-green-600/20 border border-emerald-400/30 text-emerald-300 px-4 py-4 rounded-2xl text-sm font-medium text-center hover:from-emerald-500/30 hover:to-green-600/30 transition-all duration-300 cursor-pointer">
-                  <Shield className="w-6 h-6 mx-auto mb-2 group-hover:scale-110 transition-transform duration-200" />
-                  <span>Resilience Scoring</span>
-                </div>
-                <div className="group bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-400/30 text-blue-300 px-4 py-4 rounded-2xl text-sm font-medium text-center hover:from-blue-500/30 hover:to-indigo-600/30 transition-all duration-300 cursor-pointer">
-                  <Target className="w-6 h-6 mx-auto mb-2 group-hover:scale-110 transition-transform duration-200" />
-                  <span>Market Analysis</span>
-                </div>
-                <div className="group bg-gradient-to-br from-purple-500/20 to-pink-600/20 border border-purple-400/30 text-purple-300 px-4 py-4 rounded-2xl text-sm font-medium text-center hover:from-purple-500/30 hover:to-pink-600/30 transition-all duration-300 cursor-pointer">
-                  <Users className="w-6 h-6 mx-auto mb-2 group-hover:scale-110 transition-transform duration-200" />
-                  <span>Competitive Intel</span>
-                </div>
-                <div className="group bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border border-yellow-400/30 text-yellow-300 px-4 py-4 rounded-2xl text-sm font-medium text-center hover:from-yellow-500/30 hover:to-orange-600/30 transition-all duration-300 cursor-pointer">
-                  <Sparkles className="w-6 h-6 mx-auto mb-2 group-hover:scale-110 transition-transform duration-200" />
-                  <span>Investment Thesis</span>
-                </div>
-              </div>
-              
-              {/* Stats Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-                  <div className="text-2xl font-bold text-white mb-1">10,000+</div>
-                  <div className="text-sm text-slate-400">Companies Analyzed</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-                  <div className="text-2xl font-bold text-white mb-1">99.9%</div>
-                  <div className="text-sm text-slate-400">Accuracy Rate</div>
-                </div>
-                <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-                  <div className="text-2xl font-bold text-white mb-1">&lt;30s</div>
-                  <div className="text-sm text-slate-400">Analysis Time</div>
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Stats Section */}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { icon: BarChart3, label: "Companies Analyzed", value: "10,000+", bgColor: "from-blue-500/20 to-blue-600/20", iconColor: "text-blue-400" },
+              { icon: Target, label: "Accuracy Rate", value: "99.9%", bgColor: "from-emerald-500/20 to-emerald-600/20", iconColor: "text-emerald-400" },
+              { icon: Clock, label: "Average Time", value: "<30s", bgColor: "from-purple-500/20 to-purple-600/20", iconColor: "text-purple-400" }
+            ].map((stat, index) => (
+              <div key={index} className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300 group">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 bg-gradient-to-br ${stat.bgColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">{stat.value}</div>
+                    <div className="text-sm text-white/60">{stat.label}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </main>
       </div>
