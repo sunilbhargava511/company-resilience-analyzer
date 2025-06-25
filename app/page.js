@@ -125,7 +125,7 @@ export default function Home() {
     html = html.replace(/^\s*#\s*$/gm, '');
     html = html.replace(/\n\s*#\s*\n/g, '\n\n');
     
-    // Enhanced resilience score detection with multiple patterns
+    // FIRST: Extract and display resilience score at the very top
     const scorePatterns = [
       /(?:###\s*)?(?:1\.\s*)?🏆?\s*\*?\*?(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi,
       /(?:###\s*)?(?:1\.\s*)?\*?\*?Overall\s+Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi,
@@ -134,91 +134,118 @@ export default function Home() {
     ];
 
     let scoreFound = false;
+    let scoreDisplay = '';
+    let extractedScore = null;
     
-    // Try each pattern until we find a score
+    // Try each pattern to find and extract the score
     for (const pattern of scorePatterns) {
       if (scoreFound) break;
       
-      html = html.replace(pattern, (match, score) => {
-        scoreFound = true;
-        const numScore = parseFloat(score);
-        const percentage = numScore * 10;
-        let bgGradient, scoreLabel, emoji, borderColor, textColor;
-        
-        if (numScore >= 8) {
-          bgGradient = 'from-emerald-500 to-green-600';
-          scoreLabel = 'Highly Resilient';
-          emoji = '🚀';
-          borderColor = 'border-emerald-400';
-          textColor = 'text-emerald-100';
-        } else if (numScore >= 6) {
-          bgGradient = 'from-blue-500 to-indigo-600';
-          scoreLabel = 'Strong Position';
-          emoji = '💪';
-          borderColor = 'border-blue-400';
-          textColor = 'text-blue-100';
-        } else if (numScore >= 4) {
-          bgGradient = 'from-amber-500 to-orange-600';
-          scoreLabel = 'Moderate Risk';
-          emoji = '⚠️';
-          borderColor = 'border-amber-400';
-          textColor = 'text-amber-100';
-        } else {
-          bgGradient = 'from-red-500 to-red-600';
-          scoreLabel = 'High Risk';
-          emoji = '🔻';
-          borderColor = 'border-red-400';
-          textColor = 'text-red-100';
-        }
-        
-        return `
-          <div class="my-12 p-10 rounded-3xl bg-gradient-to-br ${bgGradient} shadow-2xl text-white text-center transform hover:scale-105 transition-all duration-500 border-4 ${borderColor} relative overflow-hidden">
-            <!-- Background pattern -->
-            <div class="absolute inset-0 bg-white/10 bg-grid-pattern opacity-30"></div>
-            
-            <!-- Content -->
-            <div class="relative z-10">
-              <h2 class="text-4xl font-bold mb-6 flex items-center justify-center gap-4">
-                🏆 Overall Resilience Score
-              </h2>
+      const match = text.match(pattern);
+      if (match) {
+        const scoreMatch = match[0].match(/(\d+(?:\.\d+)?)\s*\/\s*10/);
+        if (scoreMatch) {
+          extractedScore = parseFloat(scoreMatch[1]);
+          scoreFound = true;
+          
+          const numScore = extractedScore;
+          const percentage = numScore * 10;
+          let bgGradient, scoreLabel, emoji, borderColor, textColor;
+          
+          if (numScore >= 8) {
+            bgGradient = 'from-emerald-500 to-green-600';
+            scoreLabel = 'Highly Resilient';
+            emoji = '🚀';
+            borderColor = 'border-emerald-400';
+            textColor = 'text-emerald-100';
+          } else if (numScore >= 6) {
+            bgGradient = 'from-blue-500 to-indigo-600';
+            scoreLabel = 'Strong Position';
+            emoji = '💪';
+            borderColor = 'border-blue-400';
+            textColor = 'text-blue-100';
+          } else if (numScore >= 4) {
+            bgGradient = 'from-amber-500 to-orange-600';
+            scoreLabel = 'Moderate Risk';
+            emoji = '⚠️';
+            borderColor = 'border-amber-400';
+            textColor = 'text-amber-100';
+          } else {
+            bgGradient = 'from-red-500 to-red-600';
+            scoreLabel = 'High Risk';
+            emoji = '🔻';
+            borderColor = 'border-red-400';
+            textColor = 'text-red-100';
+          }
+          
+          scoreDisplay = `
+            <div class="mb-16 p-10 rounded-3xl bg-gradient-to-br ${bgGradient} shadow-2xl text-white text-center transform hover:scale-105 transition-all duration-500 border-4 ${borderColor} relative overflow-hidden">
+              <!-- Background pattern -->
+              <div class="absolute inset-0 bg-white/10 bg-grid-pattern opacity-30"></div>
               
-              <!-- Score display -->
-              <div class="relative mb-8">
-                <div class="text-9xl font-black mb-4 animate-pulse drop-shadow-2xl">${score}/10</div>
-                <div class="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl animate-bounce">
-                  ${emoji}
+              <!-- Content -->
+              <div class="relative z-10">
+                <h2 class="text-4xl font-bold mb-6 flex items-center justify-center gap-4">
+                  🏆 Overall Resilience Score
+                </h2>
+                
+                <!-- Score display -->
+                <div class="relative mb-8">
+                  <div class="text-9xl font-black mb-4 animate-pulse drop-shadow-2xl">${numScore}/10</div>
+                  <div class="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl animate-bounce">
+                    ${emoji}
+                  </div>
                 </div>
-              </div>
-              
-              <div class="text-3xl font-bold mb-4 ${textColor}">${scoreLabel}</div>
-              <div class="text-xl opacity-90 mb-8">${percentage}% Investment Grade</div>
-              
-              <!-- Progress bar -->
-              <div class="max-w-md mx-auto mb-6">
-                <div class="w-full bg-black/30 rounded-full h-6 overflow-hidden shadow-inner">
-                  <div class="h-full bg-white/90 rounded-full transition-all duration-3000 ease-out shadow-lg" style="width: ${percentage}%"></div>
+                
+                <div class="text-3xl font-bold mb-4 ${textColor}">${scoreLabel}</div>
+                <div class="text-xl opacity-90 mb-8">${percentage}% Investment Grade</div>
+                
+                <!-- Progress bar -->
+                <div class="max-w-md mx-auto mb-6">
+                  <div class="w-full bg-black/30 rounded-full h-6 overflow-hidden shadow-inner">
+                    <div class="h-full bg-white/90 rounded-full transition-all duration-3000 ease-out shadow-lg" style="width: ${percentage}%"></div>
+                  </div>
                 </div>
-              </div>
-              
-              <!-- Resilience indicators -->
-              <div class="grid grid-cols-3 gap-4 text-sm">
-                <div class="bg-white/20 rounded-xl p-3">
-                  <div class="font-bold">Adaptability</div>
-                  <div class="opacity-80">${numScore >= 7 ? 'High' : numScore >= 5 ? 'Medium' : 'Low'}</div>
-                </div>
-                <div class="bg-white/20 rounded-xl p-3">
-                  <div class="font-bold">Optionality</div>
-                  <div class="opacity-80">${numScore >= 7 ? 'Strong' : numScore >= 5 ? 'Moderate' : 'Limited'}</div>
-                </div>
-                <div class="bg-white/20 rounded-xl p-3">
-                  <div class="font-bold">Durability</div>
-                  <div class="opacity-80">${numScore >= 7 ? 'Robust' : numScore >= 5 ? 'Stable' : 'Fragile'}</div>
+                
+                <!-- Resilience indicators -->
+                <div class="grid grid-cols-3 gap-4 text-sm">
+                  <div class="bg-white/20 rounded-xl p-3">
+                    <div class="font-bold">Adaptability</div>
+                    <div class="opacity-80">${numScore >= 7 ? 'High' : numScore >= 5 ? 'Medium' : 'Low'}</div>
+                  </div>
+                  <div class="bg-white/20 rounded-xl p-3">
+                    <div class="font-bold">Optionality</div>
+                    <div class="opacity-80">${numScore >= 7 ? 'Strong' : numScore >= 5 ? 'Moderate' : 'Limited'}</div>
+                  </div>
+                  <div class="bg-white/20 rounded-xl p-3">
+                    <div class="font-bold">Durability</div>
+                    <div class="opacity-80">${numScore >= 7 ? 'Robust' : numScore >= 5 ? 'Stable' : 'Fragile'}</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        `;
-      });
+          `;
+          
+          // Remove the original score section from the text
+          for (const removePattern of scorePatterns) {
+            html = html.replace(removePattern, '');
+          }
+          
+          break;
+        }
+      }
+    }
+    
+    // If no score found, add a generic analysis header
+    if (!scoreFound && html.length > 100) {
+      scoreDisplay = `
+        <div class="mb-16 p-10 rounded-3xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-2xl text-white text-center">
+          <h2 class="text-4xl font-bold mb-4 flex items-center justify-center gap-4">
+            📊 Resilience Analysis Complete
+          </h2>
+          <div class="text-xl opacity-90">Comprehensive analysis for ${companyName}</div>
+        </div>
+      `;
     }
     
     // Enhanced Company Overview with icons and structured layout
@@ -526,7 +553,10 @@ export default function Home() {
       html += '</div>';
     }
     
-    return `<div class="prose prose-xl max-w-none text-slate-700 dark:text-slate-300">${html}</div>`;
+    // Combine score display at top with the rest of the content
+    const finalHtml = scoreDisplay + html;
+    
+    return `<div class="prose prose-xl max-w-none text-slate-700 dark:text-slate-300">${finalHtml}</div>`;
   };
 
   const shareAnalysis = async () => {
