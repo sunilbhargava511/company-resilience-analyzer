@@ -536,7 +536,7 @@ export default function Home() {
           </div>
         </header>
 
-              {/* Enhanced main form */}
+        {/* Enhanced main form */}
         <main className="max-w-6xl mx-auto px-6 pb-16">
           <div className="bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-12 relative overflow-hidden hover:shadow-purple-500/20 transition-all duration-500">
             {/* Card decoration */}
@@ -767,53 +767,52 @@ export default function Home() {
         </main>
       </div>
 
-        {/* Enhanced Results Section */}
-        {result && (
-          <section className="mt-8">
-            {/* Enhanced sticky header with more actions */}
-            <div className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-5 mb-8 rounded-t-xl shadow-lg">
-              <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
-                <h2 className="text-3xl font-bold flex items-center gap-3">
-                  <Award className="text-yellow-400 w-8 h-8" />
-                  {companyName} Investment Analysis
-                </h2>
-                <div className="flex gap-3 flex-wrap">
-                  <button
-                    onClick={downloadReport}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Download</span>
-                  </button>
-                  <button
-                    onClick={copyToClipboard}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition"
-                  >
-                    <Copy className="w-4 h-4" />
-                    <span className="hidden sm:inline">Copy</span>
-                  </button>
-                  <button
-                    onClick={shareAnalysis}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg transition"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Share</span>
-                  </button>
-                </div>
+      {/* Enhanced Results Section */}
+      {result && (
+        <section className="mt-8 max-w-6xl mx-auto px-6">
+          {/* Enhanced sticky header with more actions */}
+          <div className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-5 mb-8 rounded-t-xl shadow-lg">
+            <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-3xl font-bold flex items-center gap-3">
+                <Award className="text-yellow-400 w-8 h-8" />
+                {companyName} Investment Analysis
+              </h2>
+              <div className="flex gap-3 flex-wrap">
+                <button
+                  onClick={downloadReport}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+                <button
+                  onClick={copyToClipboard}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition"
+                >
+                  <Copy className="w-4 h-4" />
+                  <span className="hidden sm:inline">Copy</span>
+                </button>
+                <button
+                  onClick={shareAnalysis}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg transition"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Share</span>
+                </button>
               </div>
             </div>
-            
-            {/* Main results content with enhanced styling */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
-              <div 
-                id="analysis-content"
-                className="animate-fade-in"
-                dangerouslySetInnerHTML={{ __html: formatResult(result) }}
-              />
-            </div>
-          </section>
-        )}
-      </main>
+          </div>
+          
+          {/* Main results content with enhanced styling */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
+            <div 
+              id="analysis-content"
+              className="animate-fade-in"
+              dangerouslySetInnerHTML={{ __html: formatResult(result) }}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Enhanced Footer */}
       <footer className="relative z-10 py-12 text-center mt-16">
