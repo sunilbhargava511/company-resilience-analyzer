@@ -4,8 +4,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Building2,
   Zap,
-  Eye,
-  EyeOff,
   BarChart3,
   AlertCircle,
   Share2,
@@ -24,7 +22,6 @@ import {
   Copy,
   Download,
   TrendingUp,
-  Lock,
   Rocket,
   Star,
   CheckCircle,
@@ -37,8 +34,6 @@ import {
 
 export default function Home() {
   const [companyName, setCompanyName] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
   const [model, setModel] = useState('claude-3-5-sonnet-20241022');
   const [tokenLimit, setTokenLimit] = useState('6000');
   const [loading, setLoading] = useState(false);
@@ -54,9 +49,9 @@ export default function Home() {
   ];
 
   const tokenOptions = [
-    { value: '3000', label: 'Quick Resilience Score', description: 'Core metrics & score', cost: '$0.12', time: '15s' },
-    { value: '6000', label: 'Comprehensive Analysis', description: 'Full resilience report', cost: '$0.24', time: '25s' },
-    { value: '8000', label: 'Maximum Depth', description: 'Complete framework', cost: '$0.32', time: '35s' }
+    { value: '3000', label: 'Quick Resilience Score', description: 'Core metrics & score', time: '15s' },
+    { value: '6000', label: 'Comprehensive Analysis', description: 'Full resilience report', time: '25s' },
+    { value: '8000', label: 'Maximum Depth', description: 'Complete framework', time: '35s' }
   ];
 
   // Auto-adjust token limit when model changes
@@ -69,11 +64,6 @@ export default function Home() {
   const analyzeCompany = async () => {
     if (!companyName.trim()) {
       setError('Please enter a company name');
-      return;
-    }
-
-    if (!apiKey.trim()) {
-      setError('Please enter your Anthropic API key');
       return;
     }
 
@@ -94,7 +84,6 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey,
           companyName,
           model,
           tokenLimit
@@ -681,6 +670,11 @@ export default function Home() {
                 <span>Strategic Assessment</span>
               </div>
             </div>
+            
+            {/* Free to use indicator */}
+            <div className="mt-6 inline-block px-6 py-3 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-400/30 rounded-full text-emerald-300 text-lg font-semibold">
+              ✨ Free Professional Analysis - No API Key Required
+            </div>
           </div>
         </header>
 
@@ -716,79 +710,34 @@ export default function Home() {
               </div>
 
               <div className="px-8 pb-8">
-                {/* Progress Indicator */}
+                {/* Simplified Progress Indicator - No API Key Required */}
                 <div className="flex items-center gap-4 mb-8">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                      apiKey ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white/60'
-                    }`}>
-                      {apiKey ? <CheckCircle className="w-4 h-4" /> : '1'}
-                    </div>
-                    <span className="text-sm text-white/80">API Setup</span>
-                  </div>
-                  <div className="flex-1 h-px bg-white/20 relative">
-                    <div className={`absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-500 ${
-                      apiKey ? 'w-full' : 'w-0'
-                    }`}></div>
-                  </div>
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                       companyName ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white/60'
                     }`}>
-                      {companyName ? <CheckCircle className="w-4 h-4" /> : '2'}
+                      {companyName ? <CheckCircle className="w-4 h-4" /> : '1'}
                     </div>
-                    <span className="text-sm text-white/80">Target Company</span>
+                    <span className="text-sm text-white/80">Enter Company</span>
                   </div>
                   <div className="flex-1 h-px bg-white/20 relative">
-                    <div className={`absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ${
+                    <div className={`absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-500 ${
                       companyName ? 'w-full' : 'w-0'
                     }`}></div>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                      apiKey && companyName ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white animate-pulse' : 'bg-white/20 text-white/60'
+                      companyName ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white animate-pulse' : 'bg-white/20 text-white/60'
                     }`}>
-                      {apiKey && companyName ? <Play className="w-4 h-4" /> : '3'}
+                      {companyName ? <Play className="w-4 h-4" /> : '2'}
                     </div>
                     <span className="text-sm text-white/80">Analyze</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Left Column - Inputs */}
+                  {/* Left Column - Simplified Inputs */}
                   <div className="space-y-6">
-                    {/* API Key Input */}
-                    <div className="group">
-                      <label className="block text-white font-semibold mb-3 flex items-center gap-2">
-                        <Lock className="w-4 h-4 text-yellow-400" />
-                        API Authentication
-                        <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs">Required</span>
-                      </label>
-                      <div className="relative">
-                        <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 overflow-hidden group-hover:border-white/30 transition-all duration-300">
-                          <input
-                            type={showApiKey ? 'text' : 'password'}
-                            value={apiKey}
-                            onChange={(e) => setApiKey(e.target.value)}
-                            placeholder="sk-ant-api03-..."
-                            className="w-full px-4 py-4 bg-transparent text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowApiKey(!showApiKey)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-                          >
-                            {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2 text-sm text-yellow-300/80">
-                        <Globe className="w-3 h-3" />
-                        <span>Get your key from</span>
-                        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-300">console.anthropic.com</a>
-                      </div>
-                    </div>
-
                     {/* Company Input */}
                     <div className="group">
                       <label className="block text-white font-semibold mb-3 flex items-center gap-2">
@@ -838,7 +787,6 @@ export default function Home() {
                                   <div className="text-xs text-white/60">{option.description}</div>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-xs text-green-400">{option.cost}</div>
                                   <div className="text-xs text-blue-400">{option.time}</div>
                                 </div>
                               </label>
@@ -939,7 +887,7 @@ export default function Home() {
                     {/* Action Button */}
                     <button
                       onClick={analyzeCompany}
-                      disabled={!apiKey || !companyName || loading}
+                      disabled={!companyName || loading}
                       className="w-full group relative overflow-hidden bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 hover:from-emerald-700 hover:via-blue-700 hover:to-purple-700 text-white px-8 py-6 rounded-2xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50"
                     >
                       {/* Background Animation */}
@@ -1074,7 +1022,7 @@ export default function Home() {
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8">
             <div className="flex items-center justify-center gap-3 mb-6">
               <Shield className="w-5 h-5 text-emerald-400" />
-              <span className="text-slate-300">Your API key is never stored</span>
+              <span className="text-slate-300">Secure & Private Analysis</span>
               <span className="text-slate-500">•</span>
               <Activity className="w-5 h-5 text-blue-400" />
               <span className="text-slate-300">NZS Capital Framework</span>

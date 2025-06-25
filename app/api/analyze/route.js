@@ -1,16 +1,38 @@
+// app/api/analyze/route.js - Secure server-side implementation
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { apiKey, companyName, model, tokenLimit } = await request.json();
+    const { companyName, model, tokenLimit } = await request.json();
 
-    if (!apiKey || !companyName) {
+    if (!companyName) {
       return NextResponse.json(
-        { error: 'API key and company name are required' },
+        { error: 'Company name is required' },
         { status: 400 }
       );
     }
 
+    // Use server-side environment variable for API key
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'API configuration error. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
+    // Rate limiting check (optional but recommended)
+    const clientIP = request.headers.get('x-forwarded-for') || 
+                     request.headers.get('x-real-ip') || 
+                     'unknown';
+    
+    // Simple rate limiting (you could use Redis or a database for more robust limiting)
+    const rateLimitKey = `ratelimit_${clientIP}`;
+    
+    // Optional: Implement daily/hourly limits per IP
+    // This is a basic example - in production, use a proper rate limiting service
+    
     const ENHANCED_RESILIENCE_PROMPT = `# Company Resilience Score Evaluation Prompt
 
 You are an investment analyst evaluating companies using NZS Capital's Complexity Investing philosophy. Your task is to assess a company's resilience score based on their framework that views markets as complex adaptive systems.
@@ -245,17 +267,17 @@ Please provide a comprehensive resilience evaluation following the format above.
     if (!response.ok) {
       if (response.status === 401) {
         return NextResponse.json(
-          { error: 'Invalid API key. Please check your Anthropic API key.' },
-          { status: 401 }
+          { error: 'API authentication failed. Please contact support.' },
+          { status: 500 }
         );
       } else if (response.status === 429) {
         return NextResponse.json(
-          { error: 'Rate limit exceeded. Please try again later.' },
+          { error: 'Service temporarily busy. Please try again in a moment.' },
           { status: 429 }
         );
       } else {
         return NextResponse.json(
-          { error: data.error?.message || 'Failed to analyze company' },
+          { error: data.error?.message || 'Analysis service temporarily unavailable' },
           { status: response.status }
         );
       }
@@ -269,7 +291,7 @@ Please provide a comprehensive resilience evaluation following the format above.
   } catch (error) {
     console.error('Error in analyze API:', error);
     return NextResponse.json(
-      { error: 'Internal server error: ' + error.message },
+      { error: 'Analysis service temporarily unavailable. Please try again.' },
       { status: 500 }
     );
   }
