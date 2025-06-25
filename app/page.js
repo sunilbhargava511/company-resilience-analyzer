@@ -21,7 +21,9 @@ import {
   Award,
   Brain,
   Loader2,
-  Copy
+  Copy,
+  Download,
+  TrendingUp
 } from 'lucide-react';
 
 // Reusable styled Input component
@@ -60,7 +62,7 @@ export default function Home() {
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [model, setModel] = useState('claude-3-5-sonnet-20241022');
-  const [tokenLimit, setTokenLimit] = useState('4000');
+  const [tokenLimit, setTokenLimit] = useState('6000');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
@@ -74,9 +76,9 @@ export default function Home() {
   ];
 
   const tokenOptions = [
-    { value: '2000', label: 'Concise (2K tokens)', description: 'Brief analysis - fastest & lowest cost (~$0.08)' },
-    { value: '4000', label: 'Standard (4K tokens)', description: 'Comprehensive analysis - works with all models (~$0.15)' },
-    { value: '8000', label: 'Extended (8K tokens)', description: 'Maximum depth - requires Claude 3.5 Sonnet (~$0.30)' }
+    { value: '3000', label: 'Concise (3K tokens)', description: 'Brief analysis - fastest & lowest cost (~$0.12)' },
+    { value: '6000', label: 'Comprehensive (6K tokens)', description: 'Detailed analysis - recommended (~$0.24)' },
+    { value: '8000', label: 'Maximum Depth (8K tokens)', description: 'Most thorough - requires Claude 3.5 Sonnet (~$0.32)' }
   ];
 
   // Auto-adjust token limit when model changes
@@ -135,7 +137,7 @@ export default function Home() {
     }
   };
 
-  // Fixed and simplified formatResult function
+  // Enhanced formatting function for better report structure
   const formatResult = (text) => {
     if (!text) return '';
     
@@ -145,43 +147,51 @@ export default function Home() {
     html = html.replace(/^\s*#\s*$/gm, '');
     html = html.replace(/\n\s*#\s*\n/g, '\n\n');
     
-    // Extract and handle the overall resilience score FIRST
-    html = html.replace(/(?:###\s*1\.\s*)?Overall Resilience Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10/gi, (match, score) => {
+    // Extract and format the resilience score with enhanced styling
+    html = html.replace(/(?:###\s*)?🏆\s*\*?\*?Overall Resilience Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi, (match, score) => {
       const numScore = parseFloat(score);
       const percentage = numScore * 10;
-      let bgGradient = 'from-red-600 to-red-700';
-      let scoreLabel = 'Fragile';
+      let bgGradient, scoreLabel, emoji;
       
       if (numScore >= 8) {
-        bgGradient = 'from-green-600 to-green-700';
+        bgGradient = 'from-emerald-500 to-green-600';
         scoreLabel = 'Highly Resilient';
+        emoji = '🚀';
       } else if (numScore >= 6) {
-        bgGradient = 'from-blue-600 to-blue-700';
-        scoreLabel = 'Solid Resilience';
+        bgGradient = 'from-blue-500 to-indigo-600';
+        scoreLabel = 'Strong Position';
+        emoji = '💪';
       } else if (numScore >= 4) {
-        bgGradient = 'from-yellow-600 to-yellow-700';
-        scoreLabel = 'Moderate Resilience';
+        bgGradient = 'from-amber-500 to-orange-600';
+        scoreLabel = 'Moderate Risk';
+        emoji = '⚠️';
+      } else {
+        bgGradient = 'from-red-500 to-red-600';
+        scoreLabel = 'High Risk';
+        emoji = '🔻';
       }
       
       return `
-        <div class="my-8 p-8 rounded-2xl bg-gradient-to-br ${bgGradient} shadow-2xl text-white text-center transform hover:scale-105 transition-transform">
+        <div class="my-8 p-8 rounded-2xl bg-gradient-to-br ${bgGradient} shadow-2xl text-white text-center transform hover:scale-105 transition-all duration-300">
           <h2 class="text-3xl font-bold mb-4 flex items-center justify-center gap-3">
             🏆 Overall Resilience Score
           </h2>
-          <div class="text-7xl font-black mb-4 animate-pulse">${score}/10</div>
-          <div class="text-2xl font-semibold mb-2">${scoreLabel}</div>
-          <div class="text-lg opacity-90">${percentage}% Resilient</div>
+          <div class="text-8xl font-black mb-4 animate-pulse drop-shadow-lg">${score}/10</div>
+          <div class="text-2xl font-semibold mb-2 flex items-center justify-center gap-2">
+            ${emoji} ${scoreLabel}
+          </div>
+          <div class="text-lg opacity-90 mb-6">${percentage}% Investment Grade</div>
           <div class="mt-6 max-w-md mx-auto">
             <div class="w-full bg-black/20 rounded-full h-4 overflow-hidden">
-              <div class="h-full bg-white/80 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
+              <div class="h-full bg-white/90 rounded-full transition-all duration-2000 ease-out" style="width: ${percentage}%"></div>
             </div>
           </div>
         </div>
       `;
     });
     
-    // Handle Company Overview section with better parsing
-    html = html.replace(/###\s*📊\s*Company Overview([\s\S]*?)(?=###|##|$)/gi, (match, content) => {
+    // Enhanced Company Overview with structured layout
+    html = html.replace(/###\s*📊\s*\*?\*?Company Overview\*?\*?([\s\S]*?)(?=###|##|$)/gi, (match, content) => {
       const lines = content.split('\n').filter(line => line.trim() && !line.trim().startsWith('#'));
       const companyData = {};
       
@@ -214,26 +224,37 @@ export default function Home() {
       
       if (Object.keys(companyData).length > 0) {
         let overviewHtml = `
-          <div class="my-8 p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl border border-purple-200 dark:border-purple-700 shadow-lg">
-            <h3 class="text-3xl font-bold mb-6 text-purple-800 dark:text-purple-300 flex items-center gap-3">
+          <div class="my-8 p-8 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
+            <h3 class="text-4xl font-bold mb-8 text-slate-800 dark:text-slate-200 flex items-center gap-3 border-b border-slate-300 dark:border-slate-600 pb-4">
               📊 Company Overview
             </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         `;
         
-        // Order the fields logically
-        const orderedKeys = ['Company', 'Industry', 'Founded', 'Headquarters', 'Employees', 'Market Position', 'Customer Base', 'Business Model', 'Key Products/Services'];
-        const fullWidthKeys = ['Business Model', 'Market Position', 'Key Products/Services', 'Customer Base'];
+        // Order the fields logically with icons
+        const fieldConfig = {
+          'Company': { icon: '🏢', fullWidth: false },
+          'Industry': { icon: '🏭', fullWidth: false },
+          'Founded': { icon: '📅', fullWidth: false },
+          'Headquarters': { icon: '🌍', fullWidth: false },
+          'Employees': { icon: '👥', fullWidth: false },
+          'Market Position': { icon: '📈', fullWidth: true },
+          'Business Model': { icon: '💼', fullWidth: true },
+          'Key Revenue Drivers': { icon: '💰', fullWidth: true },
+          'Geographic Footprint': { icon: '🗺️', fullWidth: true }
+        };
         
-        orderedKeys.forEach(key => {
+        Object.entries(fieldConfig).forEach(([key, config]) => {
           if (companyData[key]) {
-            const isFullWidth = fullWidthKeys.includes(key);
-            const colSpan = isFullWidth ? 'md:col-span-2' : '';
+            const colSpan = config.fullWidth ? 'lg:col-span-3' : '';
             
             overviewHtml += `
-              <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 ${colSpan}">
-                <div class="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase mb-2">${key}</div>
-                <div class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">${companyData[key]}</div>
+              <div class="p-6 bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow ${colSpan}">
+                <div class="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase mb-3 flex items-center gap-2">
+                  <span class="text-lg">${config.icon}</span>
+                  ${key}
+                </div>
+                <div class="text-slate-700 dark:text-slate-300 text-base leading-relaxed">${companyData[key]}</div>
               </div>
             `;
           }
@@ -247,28 +268,28 @@ export default function Home() {
         return overviewHtml;
       }
       
-      return match; // Return original if parsing fails
+      return match;
     });
     
-    // Handle main section headers with emojis
-    html = html.replace(/###\s+([🔋⚠️🎯🚀📈📊💡🔄].*?)$/gm, (match, content) => {
-      return `<h3 class="text-2xl font-bold mt-12 mb-6 text-gray-900 dark:text-white border-b-2 border-purple-600 pb-3 flex items-center gap-2">${content}</h3>`;
+    // Enhanced section headers with better emoji handling and styling
+    html = html.replace(/###\s+([📈🚀⚔️🎯⚠️📊💡🔮].*?)$/gm, (match, content) => {
+      return `<h3 class="text-3xl font-bold mt-16 mb-8 text-slate-900 dark:text-white border-b-4 border-gradient-to-r from-purple-500 to-pink-500 pb-4 flex items-center gap-3 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900 -mx-4 px-4 py-4 rounded-lg">${content}</h3>`;
     });
     
-    // Handle subsection headers
+    // Enhanced subsection headers
     html = html.replace(/####\s+(.+)$/gm, (match, content) => {
-      return `<h4 class="text-xl font-bold mt-8 mb-4 text-purple-700 dark:text-purple-300">${content}</h4>`;
+      return `<h4 class="text-2xl font-bold mt-10 mb-6 text-purple-700 dark:text-purple-300 border-l-4 border-purple-500 pl-4 bg-purple-50 dark:bg-purple-900/20 py-2 rounded-r-lg">${content}</h4>`;
     });
     
-    // Handle other section headers
+    // Standard section headers
     html = html.replace(/###\s+(.+)$/gm, (match, content) => {
-      return `<h3 class="text-xl font-bold mt-10 mb-6 text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-600 pb-2">${content}</h3>`;
+      return `<h3 class="text-2xl font-bold mt-12 mb-6 text-slate-900 dark:text-white border-b-2 border-slate-300 dark:border-slate-600 pb-3">${content}</h3>`;
     });
     
     html = html.replace(/##\s+(.+)$/gm, 
-      '<h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white border-b-2 border-purple-600 pb-3">$1</h2>');
+      '<h2 class="text-4xl font-bold mt-16 mb-10 text-slate-900 dark:text-white border-b-4 border-purple-600 pb-4">$1</h2>');
     
-    // Enhanced table formatting
+    // Enhanced table formatting with better responsive design
     html = html.replace(/\n\|([^\n]+)\|\n\|[\s:|-]+\|\n((?:\|[^\n]+\|\n?)*)/g, (match, headerLine, bodyLines) => {
       const headers = headerLine.split('|').filter(h => h.trim()).map(h => h.trim());
       const rows = bodyLines.trim().split('\n').filter(line => line.trim()).map(line => 
@@ -278,46 +299,48 @@ export default function Home() {
       if (headers.length === 0 || rows.length === 0) return match;
       
       let tableHtml = `
-        <div class="overflow-x-auto my-8 rounded-xl shadow-lg">
-          <table class="w-full border-collapse bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto my-10 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700">
+          <table class="w-full border-collapse bg-white dark:bg-slate-800">
             <thead>
-              <tr class="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+              <tr class="bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 text-white">
       `;
       
       headers.forEach((header) => {
-        tableHtml += `<th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">${header}</th>`;
+        tableHtml += `<th class="px-6 py-5 text-left text-sm font-bold uppercase tracking-wider border-r border-white/20 last:border-r-0">${header}</th>`;
       });
       
       tableHtml += `
               </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
       `;
       
       rows.forEach((row, index) => {
         const isTotalRow = row[0]?.toLowerCase().includes('total');
-        const bgClass = index % 2 === 0 ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800';
+        const isHeaderRow = row.some(cell => cell.includes('**') || cell.includes('Category'));
+        const bgClass = isHeaderRow ? 'bg-slate-100 dark:bg-slate-700 font-semibold' : 
+                       index % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-slate-50 dark:bg-slate-800/50';
         
-        tableHtml += `<tr class="${bgClass} hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors ${isTotalRow ? 'font-bold border-t-2 border-purple-200 dark:border-purple-700' : ''}">`;
+        tableHtml += `<tr class="${bgClass} hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${isTotalRow ? 'font-bold border-t-4 border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/30' : ''}">`;
         
         row.forEach((cell, cellIdx) => {
           let cellContent = cell
-            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-600 dark:text-purple-400">$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>');
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-600 dark:text-purple-400 font-bold">$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em class="text-slate-600 dark:text-slate-400">$1</em>');
           
-          // Style percentages and scores
+          // Enhanced cell styling based on content
           if (cell.includes('%') && !isNaN(parseFloat(cell.replace('%', '')))) {
             const val = parseFloat(cell.replace('%', ''));
-            const colorClass = val >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-            cellContent = `<span class="${colorClass} font-semibold">${cellContent}</span>`;
+            const colorClass = val >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold';
+            cellContent = `<span class="${colorClass} bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">${cellContent}</span>`;
           }
           
           if (cellIdx > 0 && cell.includes('/') && !isNaN(cell.split('/')[0])) {
-            cellContent = `<strong class="text-purple-600 dark:text-purple-400">${cellContent}</strong>`;
+            cellContent = `<strong class="text-purple-600 dark:text-purple-400 text-lg">${cellContent}</strong>`;
           }
           
-          const cellClass = cellIdx === 0 ? 'font-semibold text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300';
-          tableHtml += `<td class="px-6 py-4 text-sm ${cellClass}">${cellContent}</td>`;
+          const cellClass = cellIdx === 0 ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-300';
+          tableHtml += `<td class="px-6 py-4 text-sm ${cellClass} border-r border-slate-200 dark:border-slate-700 last:border-r-0">${cellContent}</td>`;
         });
         
         tableHtml += '</tr>';
@@ -332,48 +355,41 @@ export default function Home() {
       return tableHtml;
     });
     
-    // Handle bullet points - convert to proper list format
-    html = html.replace(/^[-•]\s+(.+)$/gm, '<li class="mb-2 text-gray-700 dark:text-gray-300 leading-relaxed">$1</li>');
+    // Enhanced bullet points with better styling
+    html = html.replace(/^[-•]\s+(.+)$/gm, '<li class="mb-3 text-slate-700 dark:text-slate-300 leading-relaxed text-base">$1</li>');
     
-    // Group consecutive list items
+    // Group consecutive list items with enhanced styling
     html = html.replace(/(<li[^>]*>.*?<\/li>[\s\n]*)+/gs, (match) => {
-      return `<ul class="list-disc list-inside space-y-2 mb-6 ml-4">${match}</ul>`;
+      return `<ul class="space-y-3 mb-8 ml-6 border-l-4 border-blue-200 dark:border-blue-700 pl-6 bg-blue-50/50 dark:bg-blue-900/10 py-4 rounded-r-lg">${match}</ul>`;
     });
     
-    // Handle special sections
-    html = html.replace(/🎯\s*Bottom Line:/g, 
-      `<div class="my-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-l-4 border-blue-500 shadow-lg">
-        <h4 class="text-xl font-bold text-blue-700 dark:text-blue-400 mb-4 flex items-center gap-2">
-          🎯 Bottom Line
+    // Enhanced special sections with distinct styling
+    html = html.replace(/💡\s*\*?\*?Investment Thesis & Recommendation\*?\*?:/g, 
+      `<div class="my-12 p-8 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl border-2 border-emerald-200 dark:border-emerald-700 shadow-xl">
+        <h4 class="text-3xl font-bold text-emerald-700 dark:text-emerald-400 mb-6 flex items-center gap-3">
+          💡 Investment Thesis & Recommendation
         </h4>
-        <div class="text-gray-700 dark:text-gray-300 text-lg leading-relaxed">`);
+        <div class="space-y-6">`);
     
-    html = html.replace(/💡\s*Portfolio Positioning Recommendation:/g, 
-      `</div></div><div class="my-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl border-l-4 border-purple-500 shadow-lg">
-        <h4 class="text-xl font-bold text-purple-700 dark:text-purple-400 mb-4 flex items-center gap-2">
-          💡 Portfolio Positioning Recommendation
+    html = html.replace(/🔮\s*\*?\*?Key Catalysts & Monitoring Points\*?\*?:/g, 
+      `</div></div><div class="my-12 p-8 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-2xl border-2 border-amber-200 dark:border-amber-700 shadow-xl">
+        <h4 class="text-3xl font-bold text-amber-700 dark:text-amber-400 mb-6 flex items-center gap-3">
+          🔮 Key Catalysts & Monitoring Points
         </h4>
-        <div class="space-y-3">`);
+        <div class="space-y-6">`);
     
-    html = html.replace(/🔄\s*Key Scenarios to Monitor:/g, 
-      `</div></div><div class="my-8 p-6 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl border-l-4 border-amber-500 shadow-lg">
-        <h4 class="text-xl font-bold text-amber-700 dark:text-amber-400 mb-4 flex items-center gap-2">
-          🔄 Key Scenarios to Monitor
-        </h4>
-        <div class="space-y-4">`);
-    
-    // Handle checkboxes
+    // Enhanced checkbox styling
     html = html.replace(/^\[\s*\]\s+(.+)$/gm, 
-      '<div class="flex items-center gap-3 mb-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700"><input type="checkbox" disabled class="w-4 h-4" /> <span class="text-gray-700 dark:text-gray-300">$1</span></div>');
+      '<div class="flex items-center gap-4 mb-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-xl border-2 border-slate-300 dark:border-slate-700 hover:shadow-md transition-shadow"><input type="checkbox" disabled class="w-5 h-5 rounded border-2" /> <span class="text-slate-700 dark:text-slate-300 text-base">$1</span></div>');
     
     html = html.replace(/^\[x\]\s+(.+)$/gim, 
-      '<div class="flex items-center gap-3 mb-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700"><input type="checkbox" disabled checked class="w-4 h-4 text-green-600" /> <span class="text-green-700 dark:text-green-300 font-semibold">$1</span></div>');
+      '<div class="flex items-center gap-4 mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border-2 border-emerald-200 dark:border-emerald-700 shadow-md"><input type="checkbox" disabled checked class="w-5 h-5 text-emerald-600 rounded border-2" /> <span class="text-emerald-700 dark:text-emerald-300 font-semibold text-base">$1</span></div>');
     
-    // Format bold and italic text
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-purple-700 dark:text-purple-300">$1</strong>');
-    html = html.replace(/\*([^*]+)\*/g, '<em class="italic text-gray-600 dark:text-gray-400">$1</em>');
+    // Enhanced text formatting
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 px-1 rounded">$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em class="italic text-slate-600 dark:text-slate-400">$1</em>');
     
-    // Convert paragraphs
+    // Convert paragraphs with enhanced spacing
     html = html.split('\n\n').map(paragraph => {
       paragraph = paragraph.trim();
       if (paragraph && 
@@ -384,7 +400,7 @@ export default function Home() {
           !paragraph.startsWith('•') &&
           !paragraph.match(/^\d+\.\s/) &&
           paragraph.length > 10) {
-        return `<p class="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">${paragraph}</p>`;
+        return `<p class="mb-6 text-slate-700 dark:text-slate-300 leading-relaxed text-lg">${paragraph}</p>`;
       }
       return paragraph;
     }).join('\n\n');
@@ -402,7 +418,7 @@ export default function Home() {
       html += '</div>';
     }
     
-    return `<div class="prose max-w-none">${html}</div>`;
+    return `<div class="prose prose-lg max-w-none text-slate-700 dark:text-slate-300">${html}</div>`;
   };
 
   const shareAnalysis = async () => {
@@ -410,8 +426,8 @@ export default function Home() {
     const score = scoreMatch ? scoreMatch[1] : 'N/A';
     
     const shareData = {
-      title: `${companyName} Resilience Analysis`,
-      text: `Complexity investing analysis of ${companyName}. Resilience Score: ${score}/10`,
+      title: `${companyName} Investment Analysis`,
+      text: `Comprehensive investment analysis of ${companyName}. Resilience Score: ${score}/10`,
       url: window.location.href
     };
 
@@ -437,6 +453,16 @@ export default function Home() {
     }
   };
 
+  const downloadReport = () => {
+    const element = document.createElement('a');
+    const file = new Blob([result], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${companyName.replace(/\s+/g, '_')}_Analysis_Report.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
   return (
     <div className="min-h-screen text-gray-100">
       {/* Animated background elements */}
@@ -451,10 +477,10 @@ export default function Home() {
           <Brain className="w-14 h-14 text-white" />
         </div>
         <h1 className="text-6xl font-black bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent mb-4">
-          Complexity Investing Analysis
+          Investment Analysis Platform
         </h1>
-        <p className="text-xl text-purple-300 max-w-2xl mx-auto leading-relaxed">
-          Evaluate companies through adaptability, innovation, and value creation using NZS Capital&apos;s framework.
+        <p className="text-xl text-purple-300 max-w-3xl mx-auto leading-relaxed">
+          Professional-grade company analysis powered by AI. Get comprehensive investment insights, competitive positioning, and resilience scoring.
         </p>
       </header>
 
@@ -488,7 +514,7 @@ export default function Home() {
               icon={Building2}
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g., Apple, Microsoft, Tesla, DoorDash"
+              placeholder="e.g., Apple, Microsoft, NVIDIA, DoorDash, Tesla"
               onKeyPress={(e) => e.key === 'Enter' && analyzeCompany()}
             />
 
@@ -509,7 +535,7 @@ export default function Home() {
                 <div>
                   <label className="flex items-center text-white font-semibold mb-3">
                     <Cpu className="w-5 h-5 mr-2 text-purple-300" />
-                    AI Model
+                    AI Model Selection
                   </label>
                   <select
                     value={model}
@@ -526,7 +552,7 @@ export default function Home() {
                 <div>
                   <label className="flex items-center text-white font-semibold mb-3">
                     <Clock className="w-5 h-5 mr-2 text-purple-300" />
-                    Analysis Depth
+                    Analysis Depth & Quality
                   </label>
                   <select
                     value={tokenLimit}
@@ -542,7 +568,7 @@ export default function Home() {
                   {model !== 'claude-3-5-sonnet-20241022' && parseInt(tokenLimit) > 4096 && (
                     <p className="mt-2 text-sm text-amber-400 flex items-center gap-2">
                       <AlertCircle className="w-4 h-4" />
-                      8K tokens requires Claude 3.5 Sonnet
+                      8K tokens requires Claude 3.5 Sonnet for optimal performance
                     </p>
                   )}
                 </div>
@@ -550,7 +576,7 @@ export default function Home() {
             )}
 
             {error && (
-              <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-400/50 text-red-200 rounded-xl mb-6">
+              <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-400/50 text-red-200 rounded-xl mb-6 backdrop-blur-sm">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -568,45 +594,52 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <BarChart3 className="w-6 h-6" />
-                  Analyze {companyName || 'Company'} Resilience
+                  <TrendingUp className="w-6 h-6" />
+                  Generate Investment Analysis
                 </>
               )}
             </button>
           </form>
 
-          {/* Feature badges */}
+          {/* Enhanced feature badges */}
           <div className="flex flex-wrap gap-3 mt-8 pt-8 border-t border-white/20 justify-center">
-            <div className="flex items-center gap-2 bg-purple-500/20 text-purple-300 px-4 py-2 rounded-full text-sm font-medium">
+            <div className="flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-4 py-2 rounded-full text-sm font-medium">
               <Shield className="w-4 h-4" />
-              100-Point Scoring
+              Resilience Scoring
             </div>
             <div className="flex items-center gap-2 bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full text-sm font-medium">
               <Target className="w-4 h-4" />
-              Adjacent Markets
+              Market Analysis
             </div>
-            <div className="flex items-center gap-2 bg-green-500/20 text-green-300 px-4 py-2 rounded-full text-sm font-medium">
+            <div className="flex items-center gap-2 bg-purple-500/20 text-purple-300 px-4 py-2 rounded-full text-sm font-medium">
               <Users className="w-4 h-4" />
-              Competitive Analysis
+              Competitive Intel
             </div>
             <div className="flex items-center gap-2 bg-yellow-500/20 text-yellow-300 px-4 py-2 rounded-full text-sm font-medium">
               <Sparkles className="w-4 h-4" />
-              NZS Capital Framework
+              Investment Thesis
             </div>
           </div>
         </div>
 
-        {/* Results Section */}
+        {/* Enhanced Results Section */}
         {result && (
           <section className="mt-8">
-            {/* Sticky header with actions */}
-            <div className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-4 mb-8 rounded-t-xl">
+            {/* Enhanced sticky header with more actions */}
+            <div className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-5 mb-8 rounded-t-xl shadow-lg">
               <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
                 <h2 className="text-3xl font-bold flex items-center gap-3">
                   <Award className="text-yellow-400 w-8 h-8" />
-                  {companyName} Analysis Results
+                  {companyName} Investment Analysis
                 </h2>
                 <div className="flex gap-3 flex-wrap">
+                  <button
+                    onClick={downloadReport}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Download</span>
+                  </button>
                   <button
                     onClick={copyToClipboard}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition"
@@ -625,8 +658,8 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Main results content */}
-            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8">
+            {/* Main results content with enhanced styling */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
               <div 
                 id="analysis-content"
                 className="animate-fade-in"
@@ -640,10 +673,10 @@ export default function Home() {
       <footer className="relative z-10 py-8 text-center text-sm text-purple-300 mt-16">
         <div className="flex items-center justify-center gap-2 mb-4">
           <Shield className="w-4 h-4" />
-          Your API key is never stored • Built with Claude&apos;s API • Powered by Next.js
+          Your API key is never stored • Powered by Claude AI • Built with Next.js
         </div>
         <p className="text-xs text-purple-400">
-          Complexity Investing framework inspired by NZS Capital&apos;s philosophy
+          Professional investment analysis platform for informed decision making
         </p>
       </footer>
     </div>

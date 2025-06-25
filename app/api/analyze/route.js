@@ -11,206 +11,179 @@ export async function POST(request) {
       );
     }
 
-    const RESILIENCE_PROMPT = `# Company Resilience Score Evaluation Prompt
+    const ENHANCED_RESILIENCE_PROMPT = `# Company Analysis & Resilience Evaluation
 
-You are an investment analyst evaluating companies using NZS Capital's Complexity Investing philosophy. Your task is to assess a company's resilience score based on their framework that views markets as complex adaptive systems.
+You are a senior investment analyst conducting a comprehensive analysis of companies using modern complexity investing principles. Your task is to provide a thorough, research-backed evaluation that assesses both current performance and long-term resilience.
 
-## Core Philosophy to Remember:
-- The future is inherently unpredictable
-- Resilient businesses can "thrive regardless of what the outside world brings"
-- Focus on companies that are "adaptable, long-term focused, innovative, possess long-duration growth, and maximize non-zero-sum outcomes"
-- Look for management teams with a long-term focus on innovation and adaptability
-- Value companies creating optionality around their business core
-- Seek both positive feedback loops AND negative feedback governors
-- **Competitive advantage through value creation, not value extraction**
-- **Adjacent markets as real options for future growth**
-- **Performance metrics should reflect value creation, not just financial engineering**
+## Analysis Framework:
+- **Current Performance**: Financial metrics, market position, competitive advantages
+- **Resilience Factors**: Adaptability, innovation capacity, long-term value creation
+- **Future Optionality**: Adjacent markets, growth vectors, strategic positioning
+- **Risk Assessment**: Vulnerabilities, competitive threats, disruption potential
 
-## Evaluation Request:
+## Company to Analyze: ${companyName}
 
-**Red Flags to Watch For:** Rent-seeking, high customer churn, extreme leverage, winner-take-all mentality, brittle systems, short-term profit maximization, zero-sum competitive strategies
+Please provide a comprehensive analysis following this structure:
 
-**Key Questions for Analysis:**
-- Who are the company's true competitors (same customer segments, similar value propositions)?
-- What adjacent markets could leverage the company's existing capabilities?
-- Is the company creating new markets or just fighting for share in existing ones?
-- How does the company create value that competitors cannot easily replicate?
-- Which metrics best capture value creation vs. value extraction in this industry?
-- Are the company's key metrics improving faster than best-in-class competitors?
-
-Please evaluate ${companyName} and provide:
-
-### 📊 Company Overview
+### 📊 **Company Overview**
 **Company**: [Company Name]  
 **Industry**: [Primary Industry/Sector]  
-**Business Model**: [2-3 sentence description of what the company does, how it makes money, and its core value proposition]  
-**Market Position**: [Market cap, revenue scale, market share or ranking]  
-**Key Products/Services**: [Main offerings that drive revenue]  
-**Customer Base**: [Primary customer segments and geographic markets]  
-**Founded**: [Year] | **Headquarters**: [Location] | **Employees**: [Number]
+**Business Model**: [2-3 sentence description of how the company creates and captures value]  
+**Market Position**: [Market cap, revenue scale, competitive ranking]  
+**Key Revenue Drivers**: [Primary products/services generating revenue]  
+**Geographic Footprint**: [Key markets and international presence]  
+**Founded**: [Year] | **Headquarters**: [Location] | **Employees**: [Approximate count]
 
-### 1. Overall Resilience Score: X/10
-(where 10 = extremely resilient, able to thrive in any environment; 1 = fragile, likely to fail under stress)
+### 🏆 **Overall Resilience Score: X/10**
 
-*Scoring Guide: 
-- 9-10: Best-in-class metrics + strong optionality (think Amazon, Microsoft)
-- 7-8: Strong metrics, some gaps vs. leaders, good adjacent opportunities
-- 5-6: Mixed metrics, average competitive position, limited optionality
-- 3-4: Lagging metrics, weak competitive position, few growth options
-- 1-2: Poor metrics across the board, being disrupted, no clear path forward*
+*Brief justification for the score in 2-3 sentences*
 
-### 2. Detailed Analysis:
+### 📈 **Financial Performance & Market Position**
 
-#### 🔋 Resilience Drivers (Strengths)
-Organize into 3-5 thematic categories such as:
-- **Adaptability & Innovation Excellence**
-- **Non-Zero-Sum Value Creation**
-- **Financial Fortress**
-- **Long-Duration Growth Engines**
-- **Optionality Portfolio**
-- **Adjacent Market Readiness**
-- **Competitive Differentiation**
-- **Best-in-Class Metrics Leadership**
+#### **Recent Financial Highlights**
+- Revenue trends and growth trajectory
+- Profitability metrics and improvements
+- Key performance indicators and record achievements
+- Market share evolution and competitive position
+- Financial resilience indicators (cash flow, debt levels, etc.)
 
-For each category, provide:
-- Bold category headers
-- Bullet points with specific evidence and metrics
-- Quantitative support (revenue figures, growth rates, market share, R&D spending)
-- Examples of successful adaptation or innovation
-- Comparison to best-in-class where relevant
-- Keep each bullet to 1-2 lines maximum
+#### **Market Dominance & Competitive Advantages**
+- Market share data and positioning vs competitors
+- Unique value propositions and competitive moats
+- Customer loyalty and retention metrics
+- Pricing power and brand strength
+- Geographic or segment leadership positions
 
-#### ⚠️ Vulnerability Factors (Risks)
-Organize into 3-5 thematic categories such as:
-- **Disruption Exposure**
-- **Value Extraction Risks**
-- **Complexity Fragilities**
-- **Feedback Loop Dangers**
-- **Optionality Constraints**
-- **Limited Adjacent Opportunities**
-- **Competitive Encroachment**
-- **Metrics Lagging Best-in-Class**
+### 🚀 **Strategic Initiatives & Growth Drivers**
 
-For each category, provide:
-- Bold category headers
-- Specific risks with potential impact
-- Quantitative context (dependency %, market exposure, concentration risks)
-- Scenarios that could break the business model
-- Critical metric gaps vs. industry leaders
-- Keep each bullet to 1-2 lines maximum
+#### **Recent Strategic Moves**
+- Major acquisitions, partnerships, or expansions
+- New product launches or market entries
+- Technology investments and innovation initiatives
+- International expansion efforts
+- Strategic repositioning or business model evolution
 
-#### 🎯 Competitive Landscape
+#### **Innovation & Technology Focus**
+- R&D investments and innovation pipeline
+- Technology advantages and capabilities
+- Digital transformation initiatives
+- Operational excellence improvements
+- Intellectual property and patents
 
-##### Direct Competitors (targeting same customer segments):
-For each major competitor (3-5), provide:
-- **Company Name**: Core strengths and market position
-- Customer overlap % and segment focus
-- Competitive advantages/disadvantages vs. our company
-- Recent strategic moves and implications
-- Market share trends and momentum
+### ⚔️ **Competitive Landscape & Market Dynamics**
 
-##### Competitive Dynamics Assessment:
-- Is competition zero-sum or is the market expanding for all?
-- Are competitors creating value or extracting it?
-- Network effects: Winner-take-all or room for multiple winners?
-- Collaboration opportunities (non-zero-sum potential)
+#### **Direct Competitors**
+For each major competitor (3-5 companies):
+- **[Competitor Name]**: Market position, strengths/weaknesses vs analyzed company
+- Competitive dynamics and market share trends
+- Differentiation factors and unique positioning
+- Recent strategic moves affecting competition
 
-#### 🚀 Adjacent Market Opportunities
+#### **Competitive Threats & Opportunities**
+- Emerging competitors or disruptive technologies
+- Market consolidation trends
+- Regulatory changes affecting competition
+- New market entrants or business model innovations
+- Collaborative opportunities vs zero-sum competition
 
-Identify 3-5 adjacent markets where the company could expand:
+### 🎯 **Adjacent Markets & Growth Optionality**
 
-For each adjacent market:
-- **Market Name & Size**: Current TAM and growth rate
-- **Key Players**: Top 3 incumbents and their strengths
-- **Company's Potential Edge**:
-  - Transferable capabilities or assets
-  - Customer relationship leverage
-  - Technology or operational advantages
-  - Brand permission to enter
-- **Revenue Potential**: Realistic 5-year revenue opportunity
-- **Execution Risk**: Low/Medium/High with rationale
-- **Non-Zero-Sum Potential**: Would entry create or destroy value?
+#### **Expansion Opportunities**
+Identify 3-5 adjacent markets or growth vectors:
 
-##### Optionality Score: 
-Rate the company's adjacent market options 1-10 based on:
-- Number of viable expansion paths
-- Size of opportunities
-- Probability of success
-- Value creation potential
+**[Market/Opportunity Name]**
+- **Market Size**: Current TAM and growth projections
+- **Strategic Rationale**: Why this makes sense for the company
+- **Competitive Landscape**: Key players and entry barriers
+- **Company Advantages**: Transferable assets, capabilities, or relationships
+- **Revenue Potential**: Realistic timeline and scale
+- **Execution Risk**: Assessment of implementation challenges
 
-#### 📈 Key Performance Metrics & Benchmarks
+#### **Future Optionality Score: X/10**
+*Brief assessment of the company's expansion options and strategic flexibility*
 
-Identify 5-7 critical metrics for this industry and company:
+### ⚠️ **Risk Factors & Vulnerabilities**
 
-*Note: Select metrics that best reflect value creation in this specific industry. For SaaS companies, focus on ARR growth, net retention, Rule of 40. For retailers, focus on same-store sales, inventory turns, ROIC. For platforms, focus on network effects metrics. Compare to best-in-class companies serving similar customer segments.*
+#### **Key Risk Categories**
+- **Market/Competitive Risks**: Share loss, pricing pressure, new entrants
+- **Operational Risks**: Supply chain, regulatory, execution challenges
+- **Financial Risks**: Debt levels, cash flow volatility, capital requirements
+- **Technology/Disruption Risks**: Obsolescence threats, innovation gaps
+- **Management/Governance Risks**: Leadership changes, strategic missteps
 
-| Metric | Company | Best-in-Class | Leader | Gap Analysis |
-|--------|---------|---------------|---------|--------------|
+#### **Scenario Analysis**
+- **Worst Case**: Key threats that could significantly impact the business
+- **Most Likely**: Expected trajectory based on current trends
+- **Best Case**: Upside scenarios from successful execution or market expansion
+
+### 📊 **Key Performance Benchmarks**
+
+| Metric Category | ${companyName} | Industry Best | Gap Analysis |
+|-----------------|---------------|---------------|--------------|
 | **Financial Efficiency** |
-| ROIC | X% | X% | [Company Name] | Above/Below by X% |
-| FCF Margin | X% | X% | [Company Name] | Implications |
-| Revenue per Employee | $X | $X | [Company Name] | Efficiency gap |
-| **Growth & Innovation** |
-| R&D % of Revenue | X% | X% | [Company Name] | Innovation commitment |
-| Revenue CAGR (5yr) | X% | X% | [Company Name] | Growth momentum |
-| New Product Revenue % | X% | X% | [Company Name] | Innovation success |
-| **Customer Value** |
-| NPS Score | X | X | [Company Name] | Customer love gap |
-| Customer Retention | X% | X% | [Company Name] | Stickiness factor |
-| LTV/CAC | X | X | [Company Name] | Value creation efficiency |
-| **Operational Excellence** |
-| [Industry-Specific Metric] | X | X | [Company Name] | Operational edge |
-| **Forward-Looking Indicators** |
-| Developer/Partner Ecosystem Growth | X% | X% | [Company Name] | Platform potential |
-| Time to Market for New Products | X months | X months | [Company Name] | Adaptability speed |
+| Revenue Growth (5yr CAGR) | X% | X% | [Assessment] |
+| Profit Margins | X% | X% | [Assessment] |
+| Return on Capital | X% | X% | [Assessment] |
+| **Market Position** |
+| Market Share | X% | X% | [Assessment] |
+| Customer Satisfaction | X | X | [Assessment] |
+| Brand Value/Recognition | [Rating] | [Rating] | [Assessment] |
+| **Innovation & Growth** |
+| R&D as % of Revenue | X% | X% | [Assessment] |
+| New Product Revenue % | X% | X% | [Assessment] |
+| Time to Market | X months | X months | [Assessment] |
 
-##### Key Insights:
-- Where does the company lead vs. lag?
-- Are gaps in metrics closing or widening over time?
-- What's the trajectory - improving faster or slower than best-in-class?
-- Which metrics matter most for long-term resilience?
-- Do best-in-class leaders achieve through value creation or extraction?
-- Are there emerging metrics that will matter more in the future?
+### 💡 **Investment Thesis & Recommendation**
 
-#### 📊 Scoring Breakdown (100 points total):
+#### **Key Strengths Summary**
+- Primary competitive advantages and market position
+- Financial performance and operational excellence
+- Strategic positioning for future growth
+- Management quality and execution track record
 
-| Category | Score | Weight | Total |
-|----------|--------|---------|--------|
-| Adaptability & Innovation | X/10 | 20% | XX |
-| Long-Duration Growth | X/10 | 15% | XX |
-| Non-Zero-Sum Characteristics | X/10 | 20% | XX |
-| Optionality Creation (incl. Adjacent Markets) | X/10 | 15% | XX |
-| Management Innovation Focus | X/10 | 10% | XX |
-| Financial Resilience & Feedback Loops | X/10 | 10% | XX |
-| Competitive Position & Dynamics | X/10 | 10% | XX |
-| **Total Resilience Score** | | | **XX/100** |
+#### **Primary Concerns**
+- Key vulnerabilities and risk factors
+- Competitive pressures and market challenges
+- Execution risks for growth initiatives
+- Valuation concerns or market headwinds
 
-#### 🎯 Bottom Line:
-[Provide a 1-2 sentence summary that captures the essence of the company's resilience, balancing key strengths against primary vulnerabilities, competitive position, metric performance vs. best-in-class, and adjacent market potential]
+#### **Bottom Line Assessment**
+[Provide a comprehensive 2-3 sentence summary that captures the investment thesis, balancing growth potential against key risks, competitive position, and long-term resilience factors]
 
-#### 💡 Portfolio Positioning Recommendation:
-- [ ] **Large Resilience Position** (80-100 score): Core holding, 5-10% position
-- [ ] **Standard Resilience Position** (60-79 score): Solid holding, 2-5% position  
-- [ ] **Optionality Play Only** (40-59 score): Small position if asymmetric upside
-- [ ] **Avoid** (Below 40 score): Too fragile for portfolio
+#### **Portfolio Positioning Recommendation**
+- [ ] **Large Position** (8-10 resilience score): Core holding for growth/stability
+- [ ] **Standard Position** (6-7 resilience score): Solid addition with some limitations  
+- [ ] **Small Position** (4-5 resilience score): Speculative play with upside potential
+- [ ] **Avoid** (Below 4): Too many risks or structural challenges
 
-#### 🔄 Key Scenarios to Monitor:
-- **Best Case**: [What could make this company thrive beyond expectations? Include successful adjacent market entry]
-- **Base Case**: [Most likely path forward with current competitive dynamics]
-- **Worst Case**: [What could break this business model? Include competitive disruption risks]
-- **Adjacent Market Trigger**: [What signals would indicate it's time to enter new markets?]
+### 🔮 **Key Catalysts & Monitoring Points**
 
-## Format Requirements:
-- Use emojis for section headers
-- Bold all category headers
-- Include specific metrics and percentages
-- Provide quantitative evidence wherever possible
-- Keep bullet points concise (1-2 lines max)
-- End with actionable portfolio recommendation
+**Positive Catalysts to Watch:**
+- Market expansion opportunities or regulatory changes
+- Product launches or technology breakthroughs
+- Strategic partnerships or acquisition targets
+- Operational improvements or cost optimization
 
-**Company to Evaluate:** ${companyName}
+**Warning Signs to Monitor:**
+- Market share loss or competitive pressure
+- Execution failures or missed guidance
+- Regulatory headwinds or legal challenges
+- Management changes or strategic pivots
 
-Please provide a comprehensive resilience evaluation following the format above.`;
+---
+
+## Formatting Guidelines:
+- Use clear section headers with emojis
+- Include specific metrics, percentages, and quantitative data
+- Provide concrete examples and recent developments
+- Keep analysis balanced between bullish and bearish factors
+- Focus on actionable insights for investment decisions
+- Compare to industry leaders and best practices
+- Include forward-looking perspective on trends and opportunities
+
+**Target Company**: ${companyName}
+
+Please conduct a thorough analysis following this framework, providing specific data and insights that would inform an investment decision.`;
 
     const isUsingExtendedTokens = parseInt(tokenLimit) > 4096 && model === 'claude-3-5-sonnet-20241022';
     
@@ -234,7 +207,7 @@ Please provide a comprehensive resilience evaluation following the format above.
         messages: [
           {
             role: 'user',
-            content: RESILIENCE_PROMPT
+            content: ENHANCED_RESILIENCE_PROMPT
           }
         ]
       })
