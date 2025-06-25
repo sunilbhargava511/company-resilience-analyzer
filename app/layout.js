@@ -1,13 +1,13 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Investment Analysis Platform',
-  description: 'Professional-grade company analysis powered by advanced AI. Generate comprehensive investment insights, competitive intelligence, and strategic assessments.',
-  keywords: ['investment analysis', 'company evaluation', 'AI analysis', 'resilience scoring', 'market intelligence'],
-  authors: [{ name: 'Investment Analysis Platform' }],
+  title: 'Company Resilience Analyzer | NZS Capital Framework',
+  description: 'Advanced company resilience evaluation using NZS Capital\'s Complexity Investing framework. Assess adaptability, optionality, and long-term value creation with AI-powered institutional-grade analysis.',
+  keywords: ['company resilience', 'complexity investing', 'NZS Capital', 'resilience scoring', 'investment analysis', 'adaptability assessment', 'optionality evaluation', 'adjacent markets', 'strategic analysis'],
+  authors: [{ name: 'Company Resilience Analyzer' }],
   openGraph: {
-    title: 'Investment Analysis Platform',
-    description: 'Professional-grade company analysis powered by advanced AI',
+    title: 'Company Resilience Analyzer | NZS Capital Framework',
+    description: 'Advanced company resilience evaluation using complexity investing principles',
     type: 'website',
   },
 };
