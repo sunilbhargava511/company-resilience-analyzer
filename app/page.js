@@ -554,7 +554,7 @@ export default function Home() {
     
     const shareData = {
       title: `${companyName} Resilience Analysis`,
-      text: `Comprehensive resilience evaluation of ${companyName}. Resilience Score: ${score}/10 using NZS Capital framework.`,
+      text: `Comprehensive resilience evaluation of ${companyName}. Resilience Score: ${score}/10 using Complexity Investing framework.`,
       url: window.location.href
     };
 
@@ -651,7 +651,7 @@ export default function Home() {
             </h1>
             
             <p className="text-xl lg:text-2xl text-slate-300 max-w-4xl mx-auto leading-relaxed mb-8 font-light">
-              Advanced resilience evaluation using <strong className="text-emerald-400">NZS Capital's Complexity Investing</strong> framework. 
+              Advanced resilience evaluation using <strong className="text-emerald-400">Complexity Investing</strong> framework. 
               Assess adaptability, optionality, and long-term value creation potential with institutional-grade analysis.
             </p>
             
@@ -833,8 +833,8 @@ export default function Home() {
                           <Activity className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-white font-semibold">NZS Capital Framework</h3>
-                          <p className="text-sm text-emerald-300">Complexity Investing</p>
+                          <h3 className="text-white font-semibold">Complexity Investing Framework</h3>
+                          <p className="text-sm text-emerald-300">Resilience Analysis</p>
                         </div>
                         <div className="ml-auto flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (
@@ -1025,7 +1025,7 @@ export default function Home() {
               <span className="text-slate-300">Secure & Private Analysis</span>
               <span className="text-slate-500">•</span>
               <Activity className="w-5 h-5 text-blue-400" />
-              <span className="text-slate-300">NZS Capital Framework</span>
+              <span className="text-slate-300">Complexity Investing Framework</span>
               <span className="text-slate-500">•</span>
               <Cpu className="w-5 h-5 text-purple-400" />
               <span className="text-slate-300">Powered by Claude AI</span>

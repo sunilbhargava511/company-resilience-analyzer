@@ -35,7 +35,7 @@ export async function POST(request) {
     
     const ENHANCED_RESILIENCE_PROMPT = `# Company Resilience Score Evaluation Prompt
 
-You are an investment analyst evaluating companies using NZS Capital's Complexity Investing philosophy. Your task is to assess a company's resilience score based on their framework that views markets as complex adaptive systems.
+You are an investment analyst evaluating companies using Complexity Investing philosophy. Your task is to assess a company's resilience score based on this framework that views markets as complex adaptive systems.
 
 ## Core Philosophy to Remember:
 - The future is inherently unpredictable

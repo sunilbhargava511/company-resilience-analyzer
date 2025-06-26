@@ -1,12 +1,12 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Company Resilience Analyzer | NZS Capital Framework',
-  description: 'Advanced company resilience evaluation using NZS Capital\'s Complexity Investing framework. Assess adaptability, optionality, and long-term value creation with AI-powered institutional-grade analysis.',
-  keywords: ['company resilience', 'complexity investing', 'NZS Capital', 'resilience scoring', 'investment analysis', 'adaptability assessment', 'optionality evaluation', 'adjacent markets', 'strategic analysis'],
+  title: 'Company Resilience Analyzer | Complexity Investing Framework',
+  description: 'Advanced company resilience evaluation using Complexity Investing framework. Assess adaptability, optionality, and long-term value creation with AI-powered institutional-grade analysis.',
+  keywords: ['company resilience', 'complexity investing', 'resilience scoring', 'investment analysis', 'adaptability assessment', 'optionality evaluation', 'adjacent markets', 'strategic analysis'],
   authors: [{ name: 'Company Resilience Analyzer' }],
   openGraph: {
-    title: 'Company Resilience Analyzer | NZS Capital Framework',
+    title: 'Company Resilience Analyzer | Complexity Investing Framework',
     description: 'Advanced company resilience evaluation using complexity investing principles',
     type: 'website',
   },
