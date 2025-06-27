@@ -1,13 +1,13 @@
-// app/api/chat/route.js - Interactive chat endpoint for Q&A and report updates
+// app/api/chat/route.js - Enhanced chat with comprehensive LLM capabilities
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { message, context, companyName, isUpdateRequest, systemPrompt, model } = await request.json();
+    const { message, context, companyName, isUpdateRequest, model, fileContext } = await request.json();
 
-    if (!message || !context || !companyName) {
+    if (!message || !companyName) {
       return NextResponse.json(
-        { error: 'Message, context, and company name are required' },
+        { error: 'Message and company name are required' },
         { status: 400 }
       );
     }
@@ -27,7 +27,7 @@ export async function POST(request) {
                      request.headers.get('x-real-ip') || 
                      'unknown';
 
-    // Construct the appropriate prompt based on request type
+    // Enhanced system prompt that enables comprehensive analysis capabilities
     let fullPrompt;
     
     if (isUpdateRequest) {
@@ -41,6 +41,8 @@ ${context}
 
 User's new information: ${message}
 
+${fileContext ? `Additional file context: ${fileContext}` : ''}
+
 Please provide a complete, updated resilience analysis that incorporates this new information. Follow the same structure and format as the original report, but update ALL relevant sections with the new insights. 
 
 Key requirements:
@@ -53,17 +55,53 @@ Key requirements:
 
 Focus on how this new information changes the overall resilience assessment, competitive position, and strategic outlook.`;
     } else {
-      // This is a question about the existing report
-      fullPrompt = `You are analyzing a company resilience report for ${companyName}. Answer the user's question based on the report content provided.
+      // This is a deep-dive analysis question
+      fullPrompt = `You are an expert investment analyst and strategic advisor with deep knowledge of business, finance, markets, and the Complexity Investing framework. You're helping analyze a company resilience report and can provide comprehensive insights beyond what's in the report.
 
-Report content:
-${context}
+## CONTEXT:
+**Company**: ${companyName}
+**Current Report**: 
+${context || 'No report available yet.'}
 
-User question: ${message}
+${fileContext ? `**Additional File Context**:
+${fileContext}` : ''}
 
-Provide a helpful, detailed answer based on the report content. Be specific and reference exact details from the report. If the question requires information not clearly stated in the report, mention that and suggest what additional analysis might be helpful.
+## YOUR EXPERTISE:
+You have deep knowledge of:
+- Complexity Investing principles and frameworks
+- Business strategy and competitive dynamics
+- Financial analysis and valuation methods
+- Industry trends and market analysis
+- Company operations and management assessment
+- Risk analysis and scenario planning
+- Adjacent market opportunities and optionality theory
+- Technology trends and disruption patterns
 
-Keep your response focused and conversational, as this is an interactive chat session.`;
+## ANALYSIS CAPABILITIES:
+When users ask questions about the report or company, provide comprehensive analysis that goes beyond the report. You can:
+
+1. **Expand on report sections** with additional context and implications
+2. **Compare with industry peers** using your knowledge of other companies
+3. **Analyze market trends** that could affect the company's resilience
+4. **Explore strategic scenarios** and their likelihood/impact
+5. **Assess management decisions** and their strategic implications  
+6. **Evaluate competitive positioning** in detail
+7. **Examine financial metrics** and their sustainability
+8. **Consider adjacent opportunities** and expansion possibilities
+9. **Address specific risks** and mitigation strategies
+10. **Provide investment recommendations** based on complexity investing principles
+
+## ANALYSIS APPROACH:
+- **Be comprehensive**: Don't just reference the report - add your own analysis
+- **Use frameworks**: Apply business strategy, financial analysis, and complexity investing concepts
+- **Consider multiple perspectives**: Bulls case, bears case, base case scenarios
+- **Think systemically**: How do different factors interconnect?
+- **Focus on resilience**: What makes this company adaptable and durable?
+- **Practical insights**: What should investors actually do with this information?
+
+## USER QUESTION: ${message}
+
+Provide a thorough, expert-level analysis that leverages your full knowledge while incorporating the report context. Be specific, actionable, and insightful. Keep your response focused and conversational, as this is an interactive chat session.`;
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -75,7 +113,7 @@ Keep your response focused and conversational, as this is an interactive chat se
       },
       body: JSON.stringify({
         model: model || 'claude-3-5-sonnet-20241022',
-        max_tokens: isUpdateRequest ? 8000 : 4000, // More tokens for full report updates
+        max_tokens: isUpdateRequest ? 8000 : 6000, // More tokens for comprehensive answers
         messages: [
           {
             role: 'user',
@@ -113,7 +151,7 @@ Keep your response focused and conversational, as this is an interactive chat se
     });
 
   } catch (error) {
-    console.error('Error in chat API:', error);
+    console.error('Error in enhanced chat API:', error);
     return NextResponse.json(
       { error: 'Chat service temporarily unavailable. Please try again.' },
       { status: 500 }

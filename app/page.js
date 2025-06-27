@@ -242,29 +242,44 @@ export default function Home() {
   // Prepare chat welcome message when report is generated
   useEffect(() => {
     if (result && chatMessages.length === 0) {
-      // Add welcome message with file upload context
+      // Add welcome message with enhanced capabilities
       const welcomeMessage = uploadedFiles.length > 0 
-        ? `🎉 **Analysis complete for ${companyName}!** 
+        ? `🎉 **Enhanced AI Analysis Ready for ${companyName}!**
 
-Your uploaded files (${uploadedFiles.map(f => f.name).join(', ')}) have been integrated into the analysis.
+Your uploaded files (${uploadedFiles.map(f => f.name).join(', ')}) have been integrated. I now have comprehensive knowledge about business, finance, markets, and strategy to provide deep analysis.
 
-**What you can do now:**
-• **Ask questions** about any aspect of the report
-• **Upload additional files** for more context  
-• **Provide new information** about the company
-• **Request report updates** with new insights
-• **Analyze specific data** from your uploaded files
+**🧠 What I can help you explore:**
+• **Deep-dive analysis** - Get detailed insights beyond the report
+• **Competitive intelligence** - Compare with industry peers and competitors  
+• **Market trend analysis** - Understand how external factors affect resilience
+• **Strategic scenarios** - Explore bull/bear/base case outcomes
+• **Risk mitigation** - Identify threats and develop countermeasures
+• **Investment strategy** - Get complexity investing recommendations
+• **File analysis** - Extract insights from your uploaded documents
+• **Report updates** - Incorporate new information and developments
 
-What would you like to explore?`
-        : `🎉 **Analysis complete for ${companyName}!** 
+**💡 Try asking complex questions like:**
+"How does this compare to Tesla's resilience strategy?" or "What market trends could disrupt this business model?" or "Analyze the downside scenarios for this investment."
 
-**What you can do now:**
-• **Ask questions** about any aspect of the report
-• **Upload files** 📎 (spreadsheets, articles, reports) for additional context
-• **Provide new information** about the company
-• **Request report updates** with new insights
+What would you like to explore first?`
+        : `🎉 **Enhanced AI Analysis Ready for ${companyName}!**
 
-What would you like to explore?`;
+I have comprehensive knowledge about business, finance, markets, and strategy to provide deep analysis beyond the report.
+
+**🧠 What I can help you explore:**
+• **Deep-dive analysis** - Get detailed insights beyond the report
+• **Competitive intelligence** - Compare with industry peers and competitors  
+• **Market trend analysis** - Understand how external factors affect resilience
+• **Strategic scenarios** - Explore bull/bear/base case outcomes
+• **Risk mitigation** - Identify threats and develop countermeasures
+• **Investment strategy** - Get complexity investing recommendations
+• **Upload files** 📎 for additional context and analysis
+• **Report updates** - Incorporate new information and developments
+
+**💡 Try asking complex questions like:**
+"How does this compare to industry leaders?" or "What market trends could disrupt this business?" or "What's the downside scenario for this investment?"
+
+What would you like to explore first?`;
 
       setChatMessages([{
         id: Date.now(),
@@ -338,31 +353,14 @@ What would you like to explore?`;
 
     try {
       // Determine if this is a question or a report update request
-      const isUpdateRequest = chatInput.toLowerCase().includes('update') || 
+      const isUpdateRequest = chatInput.toLowerCase().includes('update') && 
+                            (chatInput.toLowerCase().includes('report') || 
+                             chatInput.toLowerCase().includes('analysis')) ||
                             chatInput.toLowerCase().includes('redo') || 
                             chatInput.toLowerCase().includes('incorporate') ||
                             chatInput.toLowerCase().includes('add this') ||
-                            chatInput.toLowerCase().includes('use this info');
-
-      const systemPrompt = isUpdateRequest 
-        ? `You are helping update a company resilience analysis report. The user has provided new information about ${companyName} and wants the report updated to incorporate this information.
-
-Current report:
-${result}
-
-User's new information: ${chatInput}
-
-Please provide an updated resilience analysis that incorporates this new information. Follow the same structure and format as the original report, but update the relevant sections with the new insights. Focus on how this new information changes the resilience score and strategic positioning.
-
-Indicate at the beginning that this is "Updated Analysis v${reportVersion + 1}" and highlight what has changed.`
-        : `You are analyzing a company resilience report for ${companyName}. Answer the user's question based on the report content provided.
-
-Report content:
-${result}
-
-User question: ${chatInput}
-
-Provide a helpful, detailed answer based on the report content. If the question requires information not in the report, mention that and suggest what additional analysis might be needed.`;
+                            chatInput.toLowerCase().includes('use this info') ||
+                            chatInput.toLowerCase().includes('revise');
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -374,7 +372,6 @@ Provide a helpful, detailed answer based on the report content. If the question 
           context: result,
           companyName,
           isUpdateRequest,
-          systemPrompt,
           model,
           fileContext: fileContext || null // Include file context in chat
         })
@@ -1287,8 +1284,8 @@ Provide a helpful, detailed answer based on the report content. If the question 
                     <MessageCircle className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold">Ask Questions About {companyName}</h3>
-                    <p className="text-blue-100 text-sm">Get deeper insights and update your analysis</p>
+                    <h3 className="text-xl font-bold">Enhanced AI Analysis for {companyName}</h3>
+                    <p className="text-blue-100 text-sm">Deep insights with comprehensive business knowledge</p>
                   </div>
                 </div>
                 <button
@@ -1302,11 +1299,31 @@ Provide a helpful, detailed answer based on the report content. If the question 
               
               {/* Instructions */}
               <div className="mt-4 p-4 bg-white/10 rounded-lg">
-                <h4 className="font-semibold mb-2 text-blue-100">💡 What you can do:</h4>
+                <h4 className="font-semibold mb-3 text-blue-100">🧠 Enhanced AI Analysis - Ask Anything:</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-100">
                   <div className="flex items-center gap-2">
                     <HelpCircle className="w-4 h-4" />
-                    <span>Ask specific questions about any section</span>
+                    <span>Deep-dive into any report section</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Compare with industry competitors</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4" />
+                    <span>Explore market trends & opportunities</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-4 h-4" />
+                    <span>Strategic scenario analysis</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span>Risk assessment & mitigation</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Compass className="w-4 h-4" />
+                    <span>Investment recommendations</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Upload className="w-4 h-4" />
@@ -1314,12 +1331,11 @@ Provide a helpful, detailed answer based on the report content. If the question 
                   </div>
                   <div className="flex items-center gap-2">
                     <RefreshCw className="w-4 h-4" />
-                    <span>Request report updates with new info</span>
+                    <span>Update reports with new insights</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Lightbulb className="w-4 h-4" />
-                    <span>Explore scenarios and implications</span>
-                  </div>
+                </div>
+                <div className="mt-3 text-xs text-blue-200 italic">
+                  💡 This AI has comprehensive business knowledge and can provide detailed analysis beyond the report
                 </div>
               </div>
             </div>
@@ -1421,34 +1437,62 @@ Provide a helpful, detailed answer based on the report content. If the question 
                   </div>
                 </div>
                 
-                {/* Quick Actions */}
+                {/* Enhanced Quick Actions */}
                 <div className="flex gap-2 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setChatInput("What are the key risks for this company?")}
+                    onClick={() => setChatInput("What are the biggest risks that could hurt this company's resilience in the next 2-3 years? How can they mitigate these risks?")}
                     className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
                   >
-                    💡 Key Risks?
+                    🚨 Key Risk Analysis
                   </button>
                   <button
                     type="button"
-                    onClick={() => setChatInput("What adjacent markets show the most promise?")}
+                    onClick={() => setChatInput("How does this company compare to its main competitors? What gives it a competitive advantage or puts it at a disadvantage?")}
                     className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
                   >
-                    🚀 Best Opportunities?
+                    ⚔️ Competitive Comparison
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChatInput("What are the most promising adjacent markets for expansion? Which ones offer the best risk-adjusted returns?")}
+                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                  >
+                    🚀 Growth Opportunities
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChatInput("Analyze three scenarios: bull case, bear case, and most likely case for this company over the next 5 years.")}
+                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                  >
+                    📊 Scenario Analysis
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChatInput("What current market trends and industry developments could significantly impact this company's business model?")}
+                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                  >
+                    📈 Market Trends
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChatInput("Based on complexity investing principles, what position size and investment strategy would you recommend for this company?")}
+                    className="text-xs px-3 py-1.5 bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-700 dark:text-blue-300 rounded-lg transition-colors"
+                  >
+                    💰 Investment Strategy
                   </button>
                   {uploadedFiles.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setChatInput("Based on the uploaded files, what new insights can you provide about this company?")}
+                      onClick={() => setChatInput("Based on the uploaded files, what additional insights can you provide about this company's financial performance, competitive position, or strategic direction?")}
                       className="text-xs px-3 py-1.5 bg-green-100 hover:bg-green-200 dark:bg-green-800 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded-lg transition-colors"
                     >
-                      📎 Analyze Files
+                      📎 Deep File Analysis
                     </button>
                   )}
                   <button
                     type="button"
-                    onClick={() => setChatInput("Please update the report with new market developments and competitive changes.")}
+                    onClick={() => setChatInput("Please update the report with the latest market developments, competitive changes, and any new strategic initiatives from this company.")}
                     className="text-xs px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-800 dark:hover:bg-emerald-700 text-emerald-700 dark:text-emerald-300 rounded-lg transition-colors"
                   >
                     🔄 Update Report
