@@ -1,9 +1,9 @@
-// app/api/analyze/route.js - Secure server-side implementation
+// app/api/analyze/route.js - Enhanced with file context support
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { companyName, model, tokenLimit } = await request.json();
+    const { companyName, model, tokenLimit, fileContext } = await request.json();
 
     if (!companyName) {
       return NextResponse.json(
@@ -27,12 +27,7 @@ export async function POST(request) {
                      request.headers.get('x-real-ip') || 
                      'unknown';
     
-    // Simple rate limiting (you could use Redis or a database for more robust limiting)
-    const rateLimitKey = `ratelimit_${clientIP}`;
-    
-    // Optional: Implement daily/hourly limits per IP
-    // This is a basic example - in production, use a proper rate limiting service
-    
+    // Enhanced resilience prompt with file context support
     const ENHANCED_RESILIENCE_PROMPT = `# Company Resilience Score Evaluation Prompt
 
 You are an investment analyst evaluating companies using Complexity Investing philosophy. Your task is to assess a company's resilience score based on this framework that views markets as complex adaptive systems.
@@ -48,7 +43,14 @@ You are an investment analyst evaluating companies using Complexity Investing ph
 - **Adjacent markets as real options for future growth**
 - **Performance metrics should reflect value creation, not just financial engineering**
 
-## Evaluation Request:
+## Company to Analyze: ${companyName}
+
+${fileContext ? `## Additional Context from Uploaded Files:
+${fileContext}
+
+**Important**: Use the uploaded file data to enhance your analysis. Look for specific metrics, strategic insights, competitive information, and financial data that can inform the resilience assessment. Reference specific data points from the files where relevant.
+
+` : ''}## Evaluation Framework:
 
 **Red Flags to Watch For:** Rent-seeking, high customer churn, extreme leverage, winner-take-all mentality, brittle systems, short-term profit maximization, zero-sum competitive strategies
 
@@ -229,10 +231,11 @@ Identify 5-7 critical metrics for this industry and company:
 - Provide quantitative evidence wherever possible
 - Keep bullet points concise (1-2 lines max)
 - End with actionable portfolio recommendation
+${fileContext ? '- Reference specific data from uploaded files where relevant' : ''}
 
 **Company to Evaluate:** ${companyName}
 
-Please provide a comprehensive resilience evaluation following the format above.`;
+Please provide a comprehensive resilience evaluation following the format above.${fileContext ? ' Make sure to incorporate insights and data from the uploaded files throughout your analysis.' : ''}`;
 
     const isUsingExtendedTokens = parseInt(tokenLimit) > 4096 && model === 'claude-3-5-sonnet-20241022';
     
