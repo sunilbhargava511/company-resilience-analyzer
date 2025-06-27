@@ -523,11 +523,84 @@ Provide a helpful, detailed answer based on the report content. If the question 
       }
     }
     
-    // Format major section headers
-    html = html.replace(/#{1,3}\s*📊\s*Company Overview/gi, 
-      `<h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
-        📊 Company Overview
-      </h2>`);
+    // Handle Company Overview section specially
+    html = html.replace(/(#{1,3}\s*📊\s*Company Overview[\s\S]*?)(?=#{1,3}\s*[🔋⚠️🎯🚀📈💡🔮]|$)/gi, (match) => {
+      let sectionContent = match;
+      
+      // Replace the header
+      sectionContent = sectionContent.replace(/#{1,3}\s*📊\s*Company Overview/gi, 
+        `<h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
+          📊 Company Overview
+        </h2>`);
+      
+      // Look for key-value pairs in various formats
+      const companyData = {};
+      
+      // Pattern 1: **Key**: Value format
+      const kvPattern1 = /\*\*([^*:]+)\*\*:\s*([^\n*]+)/g;
+      let match1;
+      while ((match1 = kvPattern1.exec(sectionContent)) !== null) {
+        const key = match1[1].trim();
+        const value = match1[2].trim();
+        if (key && value && !value.includes('|')) {
+          companyData[key] = value;
+        }
+      }
+      
+      // Pattern 2: Key: Value format (without asterisks)
+      const kvPattern2 = /^([A-Za-z\s]+):\s*([^\n]+)$/gm;
+      let match2;
+      while ((match2 = kvPattern2.exec(sectionContent)) !== null) {
+        const key = match2[1].trim();
+        const value = match2[2].trim();
+        if (key && value && key.length < 30 && !value.includes('|') && !key.includes('#')) {
+          companyData[key] = value;
+        }
+      }
+      
+      // If we found company data, create a nice grid layout
+      if (Object.keys(companyData).length > 0) {
+        let gridHTML = `
+          <h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
+            📊 Company Overview
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-8">
+        `;
+        
+        // Define field icons and colors
+        const fieldConfig = {
+          'Company': { icon: '🏢', color: 'blue' },
+          'Industry': { icon: '🏭', color: 'purple' },
+          'Business Model': { icon: '💼', color: 'green' },
+          'Market Position': { icon: '📈', color: 'emerald' },
+          'Key Products/Services': { icon: '🎯', color: 'indigo' },
+          'Customer Base': { icon: '👥', color: 'pink' },
+          'Founded': { icon: '📅', color: 'orange' },
+          'Headquarters': { icon: '🌍', color: 'cyan' },
+          'Employees': { icon: '👤', color: 'violet' }
+        };
+        
+        // Create cards for each piece of data
+        Object.entries(companyData).forEach(([key, value]) => {
+          const config = fieldConfig[key] || { icon: '📋', color: 'gray' };
+          gridHTML += `
+            <div class="bg-gradient-to-br from-${config.color}-50 to-${config.color}-100 dark:from-${config.color}-900/20 dark:to-${config.color}-800/20 p-6 rounded-xl border border-${config.color}-200 dark:border-${config.color}-700/50 hover:shadow-lg transition-all duration-300">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="text-2xl">${config.icon}</span>
+                <h3 class="text-sm font-bold text-${config.color}-700 dark:text-${config.color}-300 uppercase tracking-wide">${key}</h3>
+              </div>
+              <p class="text-lg font-semibold text-gray-800 dark:text-gray-200 leading-relaxed">${value}</p>
+            </div>
+          `;
+        });
+        
+        gridHTML += '</div>';
+        return gridHTML;
+      }
+      
+      // If no structured data found, return original content with better header
+      return sectionContent;
+    });
       
     html = html.replace(/#{1,3}\s*🔋\s*Resilience Drivers/gi, 
       `<h2 class="text-3xl font-bold mt-12 mb-8 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 border-b-2 border-emerald-200 dark:border-emerald-700 pb-4">
@@ -558,14 +631,38 @@ Provide a helpful, detailed answer based on the report content. If the question 
     html = html.replace(/#{4}\s*([^#\n]+)/g, 
       `<h3 class="text-xl font-bold mt-8 mb-4 text-gray-800 dark:text-gray-200">$1</h3>`);
 
-    // Format tables
-    html = html.replace(/\n\|([^\n]+)\|\n\|[\s:|-]+\|\n((?:\|[^\n]+\|\n?)*)/g, (match, headerLine, bodyLines) => {
+    // Improved table parsing with better empty table handling
+    html = html.replace(/\n\|([^\n]+)\|\n\|[\s:|-]+\|\n((?:\|[^\n]*\|\n?)*)/g, (match, headerLine, bodyLines) => {
       const headers = headerLine.split('|').filter(h => h.trim()).map(h => h.trim());
-      const rows = bodyLines.trim().split('\n').filter(line => line.trim()).map(line => 
+      const rawRows = bodyLines.trim().split('\n').filter(line => line.trim());
+      const rows = rawRows.map(line => 
         line.split('|').filter(cell => cell.trim()).map(cell => cell.trim())
       );
       
       if (headers.length === 0) return match;
+      
+      // Check if this is the Company Overview section with empty data
+      const isCompanyOverview = headers.some(h => 
+        h.toLowerCase().includes('company') || 
+        h.toLowerCase().includes('industry') || 
+        h.toLowerCase().includes('business')
+      );
+      
+      // If Company Overview table is empty, don't render the table
+      if (isCompanyOverview && (rows.length === 0 || rows.every(row => row.length === 0))) {
+        return `
+          <div class="my-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-2xl">ℹ️</span>
+              <h3 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200">Company Information</h3>
+            </div>
+            <p class="text-yellow-700 dark:text-yellow-300">
+              Detailed company information will be populated based on the analysis. 
+              The AI is currently gathering comprehensive data about this organization.
+            </p>
+          </div>
+        `;
+      }
       
       let tableHtml = `
         <div class="overflow-x-auto my-8 rounded-lg shadow-lg">
@@ -584,12 +681,16 @@ Provide a helpful, detailed answer based on the report content. If the question 
             <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
       `;
       
-      // If no data rows, create empty row to show structure
-      if (rows.length === 0) {
+      // If no data rows or all empty, create informational message
+      if (rows.length === 0 || rows.every(row => row.length === 0)) {
         tableHtml += `<tr class="bg-white dark:bg-gray-800">`;
-        headers.forEach(() => {
-          tableHtml += `<td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">-</td>`;
-        });
+        tableHtml += `<td colspan="${headers.length}" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+          <div class="flex flex-col items-center gap-3">
+            <span class="text-4xl">📊</span>
+            <p class="text-lg font-medium">Data is being analyzed</p>
+            <p class="text-sm">Comprehensive information will be displayed here once processing is complete.</p>
+          </div>
+        </td>`;
         tableHtml += '</tr>';
       } else {
         rows.forEach((row, index) => {
