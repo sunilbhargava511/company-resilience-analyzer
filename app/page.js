@@ -426,143 +426,225 @@ Provide a helpful, detailed answer based on the report content. If the question 
     }]);
   };
 
-  // Enhanced formatting function for resilience reports
+  // Improved formatting function for resilience reports
   const formatResult = (text) => {
     if (!text) return '';
     
     let html = text;
     
-    // Check for version indicator
-    const versionMatch = html.match(/Updated Analysis v(\d+)/i);
-    if (versionMatch) {
-      const versionBadge = `
-        <div class="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-sm font-semibold">
-          <RefreshCw class="w-4 h-4" />
-          Updated Analysis v${versionMatch[1]}
-        </div>
-      `;
-      html = versionBadge + html.replace(/Updated Analysis v\d+/i, '');
-    }
-    
-    // Remove standalone # symbols that are formatting artifacts
+    // Clean up the text first
     html = html.replace(/^\s*#\s*$/gm, '');
     html = html.replace(/\n\s*#\s*\n/g, '\n\n');
     
-    // FIRST: Extract and display resilience score at the very top
+    // Extract resilience score with more robust patterns
     const scorePatterns = [
-      /(?:###\s*)?(?:1\.\s*)?🏆?\s*\*?\*?(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi,
-      /(?:###\s*)?(?:1\.\s*)?\*?\*?Overall\s+Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi,
-      /(?:###\s*)?(?:1\.\s*)?\*?\*?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*?\*?/gi,
-      /\*\*(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*\/\s*10\*\*/gi
+      /(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*[\/\-]\s*10/gi,
+      /Score:?\s*(\d+(?:\.\d+)?)\s*[\/\-]\s*10/gi,
+      /(\d+(?:\.\d+)?)\s*[\/\-]\s*10/g
     ];
 
     let scoreFound = false;
     let scoreDisplay = '';
     let extractedScore = null;
     
-    // Try each pattern to find and extract the score
+    // Try to find the score
     for (const pattern of scorePatterns) {
       if (scoreFound) break;
       
-      const match = text.match(pattern);
+      const match = html.match(pattern);
       if (match) {
-        const scoreMatch = match[0].match(/(\d+(?:\.\d+)?)\s*\/\s*10/);
+        const scoreMatch = match[0].match(/(\d+(?:\.\d+)?)/);
         if (scoreMatch) {
           extractedScore = parseFloat(scoreMatch[1]);
-          scoreFound = true;
-          
-          const numScore = extractedScore;
-          const percentage = numScore * 10;
-          let bgGradient, scoreLabel, emoji, borderColor, textColor;
-          
-          if (numScore >= 8) {
-            bgGradient = 'from-emerald-500 to-green-600';
-            scoreLabel = 'Highly Resilient';
-            emoji = '🚀';
-            borderColor = 'border-emerald-400';
-            textColor = 'text-emerald-100';
-          } else if (numScore >= 6) {
-            bgGradient = 'from-blue-500 to-indigo-600';
-            scoreLabel = 'Strong Position';
-            emoji = '💪';
-            borderColor = 'border-blue-400';
-            textColor = 'text-blue-100';
-          } else if (numScore >= 4) {
-            bgGradient = 'from-amber-500 to-orange-600';
-            scoreLabel = 'Moderate Risk';
-            emoji = '⚠️';
-            borderColor = 'border-amber-400';
-            textColor = 'text-amber-100';
-          } else {
-            bgGradient = 'from-red-500 to-red-600';
-            scoreLabel = 'High Risk';
-            emoji = '🔻';
-            borderColor = 'border-red-400';
-            textColor = 'text-red-100';
-          }
-          
-          scoreDisplay = `
-            <div class="mb-16 p-10 rounded-3xl bg-gradient-to-br ${bgGradient} shadow-2xl text-white text-center transform hover:scale-105 transition-all duration-500 border-4 ${borderColor} relative overflow-hidden">
-              <!-- Background pattern -->
-              <div class="absolute inset-0 bg-white/10 bg-grid-pattern opacity-30"></div>
-              
-              <!-- Content -->
-              <div class="relative z-10">
-                <h2 class="text-4xl font-bold mb-6 flex items-center justify-center gap-4">
-                  🏆 Overall Resilience Score
-                </h2>
-                
-                <!-- Score display -->
-                <div class="relative mb-8">
-                  <div class="text-9xl font-black mb-4 animate-pulse drop-shadow-2xl">${numScore}/10</div>
-                  <div class="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl animate-bounce">
-                    ${emoji}
+          if (extractedScore >= 0 && extractedScore <= 10) {
+            scoreFound = true;
+            
+            const numScore = extractedScore;
+            const percentage = Math.round(numScore * 10);
+            let bgGradient, scoreLabel, emoji, textColor;
+            
+            if (numScore >= 8) {
+              bgGradient = 'from-emerald-500 to-green-600';
+              scoreLabel = 'Highly Resilient';
+              emoji = '🚀';
+              textColor = 'text-emerald-100';
+            } else if (numScore >= 6) {
+              bgGradient = 'from-blue-500 to-indigo-600';
+              scoreLabel = 'Strong Position';
+              emoji = '💪';
+              textColor = 'text-blue-100';
+            } else if (numScore >= 4) {
+              bgGradient = 'from-amber-500 to-orange-600';
+              scoreLabel = 'Moderate Risk';
+              emoji = '⚠️';
+              textColor = 'text-amber-100';
+            } else {
+              bgGradient = 'from-red-500 to-red-600';
+              scoreLabel = 'High Risk';
+              emoji = '🔻';
+              textColor = 'text-red-100';
+            }
+            
+            scoreDisplay = `
+              <div class="score-card mb-12 p-8 rounded-3xl bg-gradient-to-br ${bgGradient} shadow-2xl text-white text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-white/10 opacity-30"></div>
+                <div class="relative z-10">
+                  <div class="text-6xl font-black mb-4">${numScore}/10</div>
+                  <div class="text-2xl font-bold mb-2 ${textColor}">${scoreLabel}</div>
+                  <div class="text-lg opacity-90 mb-6">${percentage}% Investment Grade</div>
+                  <div class="max-w-md mx-auto mb-4">
+                    <div class="w-full bg-black/30 rounded-full h-4 overflow-hidden">
+                      <div class="progress-bar h-full bg-white/90 rounded-full transition-all duration-2000 ease-out" style="width: ${percentage}%"></div>
+                    </div>
                   </div>
-                </div>
-                
-                <div class="text-3xl font-bold mb-4 ${textColor}">${scoreLabel}</div>
-                <div class="text-xl opacity-90 mb-8">${percentage}% Investment Grade</div>
-                
-                <!-- Progress bar -->
-                <div class="max-w-md mx-auto mb-6">
-                  <div class="w-full bg-black/30 rounded-full h-6 overflow-hidden shadow-inner">
-                    <div class="h-full bg-white/90 rounded-full transition-all duration-3000 ease-out shadow-lg" style="width: ${percentage}%"></div>
-                  </div>
-                </div>
-                
-                <!-- Resilience indicators -->
-                <div class="grid grid-cols-3 gap-4 text-sm">
-                  <div class="bg-white/20 rounded-xl p-3">
-                    <div class="font-bold">Adaptability</div>
-                    <div class="opacity-80">${numScore >= 7 ? 'High' : numScore >= 5 ? 'Medium' : 'Low'}</div>
-                  </div>
-                  <div class="bg-white/20 rounded-xl p-3">
-                    <div class="font-bold">Optionality</div>
-                    <div class="opacity-80">${numScore >= 7 ? 'Strong' : numScore >= 5 ? 'Moderate' : 'Limited'}</div>
-                  </div>
-                  <div class="bg-white/20 rounded-xl p-3">
-                    <div class="font-bold">Durability</div>
-                    <div class="opacity-80">${numScore >= 7 ? 'Robust' : numScore >= 5 ? 'Stable' : 'Fragile'}</div>
+                  <div class="grid grid-cols-3 gap-3 text-sm">
+                    <div class="bg-white/20 rounded-lg p-3">
+                      <div class="font-bold">Adaptability</div>
+                      <div class="opacity-80">${numScore >= 7 ? 'High' : numScore >= 5 ? 'Medium' : 'Low'}</div>
+                    </div>
+                    <div class="bg-white/20 rounded-lg p-3">
+                      <div class="font-bold">Optionality</div>
+                      <div class="opacity-80">${numScore >= 7 ? 'Strong' : numScore >= 5 ? 'Moderate' : 'Limited'}</div>
+                    </div>
+                    <div class="bg-white/20 rounded-lg p-3">
+                      <div class="font-bold">Durability</div>
+                      <div class="opacity-80">${numScore >= 7 ? 'Robust' : numScore >= 5 ? 'Stable' : 'Fragile'}</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          `;
-          
-          // Remove the original score section from the text
-          for (const removePattern of scorePatterns) {
-            html = html.replace(removePattern, '');
+            `;
+            
+            // Remove the score line from the main content
+            html = html.replace(pattern, '');
+            break;
           }
-          
-          break;
         }
       }
     }
     
-    // Continue with formatting...
-    // (Add remaining formatting code here - truncated for brevity)
+    // Format major section headers
+    html = html.replace(/#{1,3}\s*📊\s*Company Overview/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
+        📊 Company Overview
+      </h2>`);
+      
+    html = html.replace(/#{1,3}\s*🔋\s*Resilience Drivers/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 border-b-2 border-emerald-200 dark:border-emerald-700 pb-4">
+        🔋 Resilience Drivers
+      </h2>`);
+      
+    html = html.replace(/#{1,3}\s*⚠️\s*Vulnerability Factors/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-red-700 dark:text-red-400 flex items-center gap-3 border-b-2 border-red-200 dark:border-red-700 pb-4">
+        ⚠️ Vulnerability Factors
+      </h2>`);
+      
+    html = html.replace(/#{1,3}\s*🎯\s*Competitive Landscape/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-purple-700 dark:text-purple-400 flex items-center gap-3 border-b-2 border-purple-200 dark:border-purple-700 pb-4">
+        🎯 Competitive Landscape
+      </h2>`);
+      
+    html = html.replace(/#{1,3}\s*🚀\s*Adjacent Market/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-blue-700 dark:text-blue-400 flex items-center gap-3 border-b-2 border-blue-200 dark:border-blue-700 pb-4">
+        🚀 Adjacent Market Opportunities
+      </h2>`);
+      
+    html = html.replace(/#{1,3}\s*📈\s*Key Performance/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-indigo-700 dark:text-indigo-400 flex items-center gap-3 border-b-2 border-indigo-200 dark:border-indigo-700 pb-4">
+        📈 Key Performance Metrics
+      </h2>`);
+
+    // Format subsection headers
+    html = html.replace(/#{4}\s*([^#\n]+)/g, 
+      `<h3 class="text-xl font-bold mt-8 mb-4 text-gray-800 dark:text-gray-200">$1</h3>`);
+
+    // Format tables more simply
+    html = html.replace(/\n\|([^\n]+)\|\n\|[\s:|-]+\|\n((?:\|[^\n]+\|\n?)*)/g, (match, headerLine, bodyLines) => {
+      const headers = headerLine.split('|').filter(h => h.trim()).map(h => h.trim());
+      const rows = bodyLines.trim().split('\n').filter(line => line.trim()).map(line => 
+        line.split('|').filter(cell => cell.trim()).map(cell => cell.trim())
+      );
+      
+      if (headers.length === 0 || rows.length === 0) return match;
+      
+      let tableHtml = `
+        <div class="overflow-x-auto my-8 rounded-lg shadow-lg">
+          <table class="w-full border-collapse bg-white dark:bg-gray-800">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr>
+      `;
+      
+      headers.forEach(header => {
+        tableHtml += `<th class="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">${header}</th>`;
+      });
+      
+      tableHtml += `
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+      `;
+      
+      rows.forEach((row, index) => {
+        const bgClass = index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700';
+        tableHtml += `<tr class="${bgClass} hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">`;
+        
+        row.forEach(cell => {
+          let cellContent = cell.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          tableHtml += `<td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">${cellContent}</td>`;
+        });
+        
+        tableHtml += '</tr>';
+      });
+      
+      tableHtml += `
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      return tableHtml;
+    });
+
+    // Format text styling
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-gray-900 dark:text-white">$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em class="italic text-gray-600 dark:text-gray-400">$1</em>');
     
-    return `<div class="prose prose-xl max-w-none text-slate-700 dark:text-slate-300">${scoreDisplay + html}</div>`;
+    // Format bullet points
+    html = html.replace(/^[-•]\s+(.+)$/gm, '<li class="mb-2 text-gray-700 dark:text-gray-300">$1</li>');
+    
+    // Group consecutive list items
+    html = html.replace(/(<li[^>]*>.*?<\/li>[\s\n]*)+/gs, (match) => {
+      return `<ul class="list-disc ml-6 mb-6 space-y-2">${match}</ul>`;
+    });
+    
+    // Format checkboxes
+    html = html.replace(/^\[\s*\]\s+(.+)$/gm, 
+      '<div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-3"><input type="checkbox" disabled class="w-5 h-5" /> <span>$1</span></div>');
+    html = html.replace(/^\[x\]\s+(.+)$/gim, 
+      '<div class="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg mb-3 border border-green-200 dark:border-green-700"><input type="checkbox" disabled checked class="w-5 h-5 text-green-600" /> <span class="font-medium">$1</span></div>');
+    
+    // Format paragraphs
+    html = html.split('\n\n').map(paragraph => {
+      paragraph = paragraph.trim();
+      if (paragraph && 
+          !paragraph.includes('<') && 
+          !paragraph.startsWith('#') &&
+          !paragraph.startsWith('|') &&
+          !paragraph.startsWith('-') &&
+          !paragraph.startsWith('•') &&
+          paragraph.length > 10) {
+        return `<p class="mb-6 text-gray-700 dark:text-gray-300 leading-relaxed">${paragraph}</p>`;
+      }
+      return paragraph;
+    }).join('\n\n');
+    
+    // Handle line breaks
+    html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
+    
+    // Clean up extra spacing
+    html = html.replace(/\n\s*\n\s*\n/g, '\n\n');
+    
+    return `<div class="prose prose-lg max-w-none">${scoreDisplay + html}</div>`;
   };
 
   const shareAnalysis = async () => {
