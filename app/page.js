@@ -566,7 +566,7 @@ Provide a helpful, detailed answer based on the report content. If the question 
                 Investment Target
               </div>
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
               <div class="space-y-1">
         `;
         
@@ -574,9 +574,9 @@ Provide a helpful, detailed answer based on the report content. If the question 
         leftFields.forEach(key => {
           if (companyData[key]) {
             overviewHTML += `
-              <div class="flex">
-                <span class="font-semibold text-slate-700 dark:text-slate-300 w-20 shrink-0">${key}:</span>
-                <span class="text-slate-600 dark:text-slate-400">${companyData[key]}</span>
+              <div>
+                <span class="font-semibold text-slate-700 dark:text-slate-300">${key}:</span>
+                <span class="text-slate-600 dark:text-slate-400 ml-2">${companyData[key]}</span>
               </div>
             `;
           }
@@ -591,9 +591,9 @@ Provide a helpful, detailed answer based on the report content. If the question 
         rightFields.forEach(key => {
           if (companyData[key]) {
             overviewHTML += `
-              <div class="flex">
-                <span class="font-semibold text-slate-700 dark:text-slate-300 w-24 shrink-0">${key}:</span>
-                <span class="text-slate-600 dark:text-slate-400">${companyData[key]}</span>
+              <div>
+                <span class="font-semibold text-slate-700 dark:text-slate-300">${key}:</span>
+                <span class="text-slate-600 dark:text-slate-400 ml-2">${companyData[key]}</span>
               </div>
             `;
           }
@@ -604,9 +604,9 @@ Provide a helpful, detailed answer based on the report content. If the question 
         Object.entries(companyData).forEach(([key, value]) => {
           if (!displayedKeys.has(key)) {
             overviewHTML += `
-              <div class="flex">
-                <span class="font-semibold text-slate-700 dark:text-slate-300 w-24 shrink-0">${key}:</span>
-                <span class="text-slate-600 dark:text-slate-400">${value}</span>
+              <div>
+                <span class="font-semibold text-slate-700 dark:text-slate-300">${key}:</span>
+                <span class="text-slate-600 dark:text-slate-400 ml-2">${value}</span>
               </div>
             `;
           }
