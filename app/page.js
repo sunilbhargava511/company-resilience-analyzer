@@ -552,17 +552,17 @@ Provide a helpful, detailed answer based on the report content. If the question 
         }
       }
       
-      // If we found company data, create a consistent layout matching the report style
+      // If we found company data, create a very compact layout matching the report style
       if (Object.keys(companyData).length > 0) {
         let overviewHTML = `
-          <div class="my-12 p-8 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900 rounded-2xl border-l-8 border-blue-500 shadow-lg">
-            <h2 class="text-3xl font-bold mb-8 text-slate-800 dark:text-slate-200 flex items-center gap-4">
+          <div class="my-6 p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900 rounded-lg border-l-3 border-blue-500">
+            <h2 class="text-xl font-bold mb-3 text-slate-800 dark:text-slate-200 flex items-center gap-2">
               📊 Company Overview
-              <div class="ml-auto text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full">
+              <div class="ml-auto text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded">
                 Investment Target
               </div>
             </h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-1 text-xs">
         `;
         
         // Order of fields for better presentation
@@ -578,9 +578,9 @@ Provide a helpful, detailed answer based on the report content. If the question 
         fieldOrder.forEach(key => {
           if (companyData[key]) {
             overviewHTML += `
-              <div class="flex items-start gap-4 py-2">
-                <span class="font-bold text-slate-700 dark:text-slate-300 min-w-36 text-sm uppercase tracking-wide">${key}:</span>
-                <span class="text-slate-600 dark:text-slate-400 flex-1 leading-relaxed">${companyData[key]}</span>
+              <div class="flex gap-2">
+                <span class="font-semibold text-slate-700 dark:text-slate-300 min-w-20 shrink-0">${key}:</span>
+                <span class="text-slate-600 dark:text-slate-400">${companyData[key]}</span>
               </div>
             `;
             displayedKeys.add(key);
@@ -591,9 +591,9 @@ Provide a helpful, detailed answer based on the report content. If the question 
         Object.entries(companyData).forEach(([key, value]) => {
           if (!displayedKeys.has(key)) {
             overviewHTML += `
-              <div class="flex items-start gap-4 py-2">
-                <span class="font-bold text-slate-700 dark:text-slate-300 min-w-36 text-sm uppercase tracking-wide">${key}:</span>
-                <span class="text-slate-600 dark:text-slate-400 flex-1 leading-relaxed">${value}</span>
+              <div class="flex gap-2">
+                <span class="font-semibold text-slate-700 dark:text-slate-300 min-w-20 shrink-0">${key}:</span>
+                <span class="text-slate-600 dark:text-slate-400">${value}</span>
               </div>
             `;
           }
