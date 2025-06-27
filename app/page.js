@@ -523,15 +523,9 @@ Provide a helpful, detailed answer based on the report content. If the question 
       }
     }
     
-    // Enhanced Company Overview section handling
+    // Consistent Company Overview section handling
     html = html.replace(/(#{1,3}\s*📊\s*Company Overview[\s\S]*?)(?=#{1,3}\s*[🔋⚠️🎯🚀📈💡🔮]|$)/gi, (match) => {
       let sectionContent = match;
-      
-      // Replace the header
-      sectionContent = sectionContent.replace(/#{1,3}\s*📊\s*Company Overview/gi, 
-        `<h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
-          📊 Company Overview
-        </h2>`);
       
       // Extract company data from multiple formats
       const companyData = {};
@@ -558,61 +552,64 @@ Provide a helpful, detailed answer based on the report content. If the question 
         }
       }
       
-      // If we found company data, create a comprehensive grid layout
+      // If we found company data, create a consistent layout matching the report style
       if (Object.keys(companyData).length > 0) {
-        let gridHTML = `
-          <h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
-            📊 Company Overview
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 my-8">
+        let overviewHTML = `
+          <div class="my-12 p-8 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900 rounded-2xl border-l-8 border-blue-500 shadow-lg">
+            <h2 class="text-3xl font-bold mb-8 text-slate-800 dark:text-slate-200 flex items-center gap-4">
+              📊 Company Overview
+              <div class="ml-auto text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full">
+                Investment Target
+              </div>
+            </h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
         `;
         
-        // Enhanced field configuration
-        const fieldConfig = {
-          'Company': { icon: '🏢', color: 'blue', span: 'md:col-span-2 xl:col-span-1' },
-          'Industry': { icon: '🏭', color: 'purple', span: '' },
-          'Business Model': { icon: '💼', color: 'green', span: 'md:col-span-2' },
-          'Market Position': { icon: '📈', color: 'emerald', span: 'md:col-span-2' },
-          'Key Products/Services': { icon: '🎯', color: 'indigo', span: 'md:col-span-2' },
-          'Customer Base': { icon: '👥', color: 'pink', span: 'md:col-span-2' },
-          'Founded': { icon: '📅', color: 'orange', span: '' },
-          'Headquarters': { icon: '🌍', color: 'cyan', span: '' },
-          'Employees': { icon: '👤', color: 'violet', span: '' }
-        };
+        // Order of fields for better presentation
+        const fieldOrder = [
+          'Company', 'Industry', 'Founded', 'Headquarters', 
+          'Business Model', 'Market Position', 'Key Products/Services', 
+          'Customer Base', 'Employees'
+        ];
         
-        // Create cards for each piece of data
-        Object.entries(companyData).forEach(([key, value]) => {
-          const config = fieldConfig[key] || { icon: '📋', color: 'slate', span: '' };
-          
-          // Truncate very long values for display
-          let displayValue = value;
-          if (value.length > 200) {
-            displayValue = value.substring(0, 200) + '...';
-          }
-          
-          gridHTML += `
-            <div class="${config.span} bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 p-6 rounded-xl border border-slate-200 dark:border-slate-600 hover:shadow-xl hover:scale-105 transition-all duration-300 group">
-              <div class="flex items-start gap-3 mb-4">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <span class="text-xl text-white">${config.icon}</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <h3 class="text-sm font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-2">${key}</h3>
-                  <p class="text-gray-800 dark:text-gray-200 leading-relaxed ${value.length > 100 ? 'text-sm' : 'text-base font-semibold'}">${displayValue}</p>
-                </div>
+        // Display fields in order, then any remaining fields
+        const displayedKeys = new Set();
+        
+        fieldOrder.forEach(key => {
+          if (companyData[key]) {
+            overviewHTML += `
+              <div class="flex items-start gap-4 py-2">
+                <span class="font-bold text-slate-700 dark:text-slate-300 min-w-36 text-sm uppercase tracking-wide">${key}:</span>
+                <span class="text-slate-600 dark:text-slate-400 flex-1 leading-relaxed">${companyData[key]}</span>
               </div>
-            </div>
-          `;
+            `;
+            displayedKeys.add(key);
+          }
         });
         
-        gridHTML += '</div>';
-        return gridHTML;
+        // Add any remaining fields not in the ordered list
+        Object.entries(companyData).forEach(([key, value]) => {
+          if (!displayedKeys.has(key)) {
+            overviewHTML += `
+              <div class="flex items-start gap-4 py-2">
+                <span class="font-bold text-slate-700 dark:text-slate-300 min-w-36 text-sm uppercase tracking-wide">${key}:</span>
+                <span class="text-slate-600 dark:text-slate-400 flex-1 leading-relaxed">${value}</span>
+              </div>
+            `;
+          }
+        });
+        
+        overviewHTML += `
+            </div>
+          </div>
+        `;
+        return overviewHTML;
       }
       
       // Final fallback
       return sectionContent;
     });
-    
+
     // Format remaining section headers
     html = html.replace(/#{1,3}\s*🔋\s*Resilience Drivers/gi, 
       `<h2 class="text-3xl font-bold mt-12 mb-8 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 border-b-2 border-emerald-200 dark:border-emerald-700 pb-4">
