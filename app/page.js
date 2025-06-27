@@ -552,47 +552,60 @@ Provide a helpful, detailed answer based on the report content. If the question 
         }
       }
       
-      // If we found company data, create a very compact layout matching the report style
+      // If we found company data, create a very compact two-column layout
       if (Object.keys(companyData).length > 0) {
+        // Split fields into two groups for side-by-side layout
+        const leftFields = ['Company', 'Industry', 'Founded', 'Headquarters'];
+        const rightFields = ['Business Model', 'Market Position', 'Key Products/Services', 'Customer Base', 'Employees'];
+        
         let overviewHTML = `
-          <div class="my-6 p-4 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900 rounded-lg border-l-3 border-blue-500">
-            <h2 class="text-xl font-bold mb-3 text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <div class="my-4 p-3 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900 rounded border-l-2 border-blue-500">
+            <h2 class="text-lg font-bold mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2">
               📊 Company Overview
-              <div class="ml-auto text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded">
+              <div class="ml-auto text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded text-[10px]">
                 Investment Target
               </div>
             </h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-1 text-xs">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div class="space-y-1">
         `;
         
-        // Order of fields for better presentation
-        const fieldOrder = [
-          'Company', 'Industry', 'Founded', 'Headquarters', 
-          'Business Model', 'Market Position', 'Key Products/Services', 
-          'Customer Base', 'Employees'
-        ];
-        
-        // Display fields in order, then any remaining fields
-        const displayedKeys = new Set();
-        
-        fieldOrder.forEach(key => {
+        // Left column
+        leftFields.forEach(key => {
           if (companyData[key]) {
             overviewHTML += `
-              <div class="flex gap-2">
-                <span class="font-semibold text-slate-700 dark:text-slate-300 min-w-20 shrink-0">${key}:</span>
+              <div class="flex">
+                <span class="font-semibold text-slate-700 dark:text-slate-300 w-20 shrink-0">${key}:</span>
                 <span class="text-slate-600 dark:text-slate-400">${companyData[key]}</span>
               </div>
             `;
-            displayedKeys.add(key);
           }
         });
         
-        // Add any remaining fields not in the ordered list
+        overviewHTML += `
+              </div>
+              <div class="space-y-1">
+        `;
+        
+        // Right column
+        rightFields.forEach(key => {
+          if (companyData[key]) {
+            overviewHTML += `
+              <div class="flex">
+                <span class="font-semibold text-slate-700 dark:text-slate-300 w-24 shrink-0">${key}:</span>
+                <span class="text-slate-600 dark:text-slate-400">${companyData[key]}</span>
+              </div>
+            `;
+          }
+        });
+        
+        // Add any remaining fields that weren't in our predefined lists
+        const displayedKeys = new Set([...leftFields, ...rightFields]);
         Object.entries(companyData).forEach(([key, value]) => {
           if (!displayedKeys.has(key)) {
             overviewHTML += `
-              <div class="flex gap-2">
-                <span class="font-semibold text-slate-700 dark:text-slate-300 min-w-20 shrink-0">${key}:</span>
+              <div class="flex">
+                <span class="font-semibold text-slate-700 dark:text-slate-300 w-24 shrink-0">${key}:</span>
                 <span class="text-slate-600 dark:text-slate-400">${value}</span>
               </div>
             `;
@@ -600,6 +613,7 @@ Provide a helpful, detailed answer based on the report content. If the question 
         });
         
         overviewHTML += `
+              </div>
             </div>
           </div>
         `;
