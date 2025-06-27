@@ -239,10 +239,9 @@ export default function Home() {
     setChatMessages(prev => [...prev, removeMessage]);
   };
 
-  // Show chat automatically when report is generated
+  // Prepare chat welcome message when report is generated
   useEffect(() => {
-    if (result && !showChat) {
-      setShowChat(true);
+    if (result && chatMessages.length === 0) {
       // Add welcome message with file upload context
       const welcomeMessage = uploadedFiles.length > 0 
         ? `🎉 **Analysis complete for ${companyName}!** 
@@ -415,6 +414,17 @@ Provide a helpful, detailed answer based on the report content. If the question 
     } finally {
       setChatLoading(false);
     }
+  };
+
+  const scrollToChat = () => {
+    setShowChat(true);
+    // Small delay to ensure the chat section is rendered before scrolling
+    setTimeout(() => {
+      const chatSection = document.getElementById('chat-section');
+      if (chatSection) {
+        chatSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const clearChat = () => {
@@ -1218,26 +1228,14 @@ Provide a helpful, detailed answer based on the report content. If the question 
               <h2 className="text-3xl font-bold flex items-center gap-3">
                 <Activity className="text-emerald-400 w-8 h-8" />
                 {companyName} Analysis v{reportVersion}
-                {showChat && (
-                  <div className="ml-4 flex items-center gap-2 text-base bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full">
-                    <MessageCircle className="w-4 h-4" />
-                    Interactive
-                  </div>
-                )}
               </h2>
               <div className="flex gap-3 flex-wrap">
                 <button
-                  onClick={() => setShowChat(!showChat)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
-                    showChat 
-                      ? 'bg-blue-500/30 text-blue-200 border border-blue-400/30' 
-                      : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300'
-                  }`}
+                  onClick={scrollToChat}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline">
-                    {showChat ? 'Hide Chat' : 'Ask Questions'}
-                  </span>
+                  <span className="hidden sm:inline">Ask Questions</span>
                 </button>
                 <button
                   onClick={downloadReport}
@@ -1264,184 +1262,207 @@ Provide a helpful, detailed answer based on the report content. If the question 
             </div>
           </div>
           
-          {/* Main content area with chat */}
-          <div className={`grid ${showChat ? 'lg:grid-cols-3' : 'grid-cols-1'} gap-8`}>
-            {/* Results column */}
-            <div className={showChat ? 'lg:col-span-2' : 'col-span-1'}>
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
-                <div 
-                  id="analysis-content"
-                  className="animate-fade-in"
-                  dangerouslySetInnerHTML={{ __html: formatResult(result) }}
-                />
-              </div>
+          {/* Main content area - full width */}
+          <div className="w-full">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
+              <div 
+                id="analysis-content"
+                className="animate-fade-in"
+                dangerouslySetInnerHTML={{ __html: formatResult(result) }}
+              />
             </div>
-            
-            {/* Interactive Chat Panel */}
-            {showChat && (
-              <div className="lg:col-span-1">
-                <div className="bg-slate-900/50 backdrop-blur-xl rounded-3xl border border-slate-700 shadow-2xl h-[600px] flex flex-col sticky top-32">
-                  {/* Chat Header */}
-                  <div className="p-6 border-b border-slate-700 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                        <MessageCircle className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-white font-semibold">Interactive Analysis</h3>
-                        <p className="text-slate-400 text-sm">Ask questions or provide updates</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={clearChat}
-                        className="p-2 text-slate-400 hover:text-white transition-colors"
-                        title="Clear chat"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setShowChat(false)}
-                        className="p-2 text-slate-400 hover:text-white transition-colors"
-                        title="Close chat"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
+          </div>
+        </section>
+      )}
+
+      {/* Interactive Chat Section - Below Report */}
+      {result && showChat && (
+        <section id="chat-section" className="mt-8 max-w-4xl mx-auto px-6">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            {/* Chat Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <MessageCircle className="w-6 h-6" />
                   </div>
-                  
-                  {/* Chat Messages */}
-                  <div 
-                    ref={chatContainerRef}
-                    className="flex-1 overflow-y-auto p-6 space-y-4"
-                  >
-                    {chatMessages.map((message) => (
-                      <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-4 rounded-2xl ${
-                          message.type === 'user' 
-                            ? 'bg-blue-500 text-white ml-4' 
-                            : message.isError
-                              ? 'bg-red-500/20 text-red-200 border border-red-500/30'
-                              : message.isReportUpdate
-                                ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/30'
-                                : message.isFileUpload
-                                  ? 'bg-green-500/20 text-green-200 border border-green-500/30'
-                                  : 'bg-slate-700 text-slate-200'
-                        }`}>
-                          {message.isReportUpdate && (
-                            <div className="flex items-center gap-2 mb-2 text-emerald-300 font-semibold text-sm">
-                              <RefreshCw className="w-4 h-4" />
-                              Report Updated
-                            </div>
-                          )}
-                          {message.isFileUpload && (
-                            <div className="flex items-center gap-2 mb-2 text-green-300 font-semibold text-sm">
-                              <Upload className="w-4 h-4" />
-                              Files Processed
-                            </div>
-                          )}
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                            {message.content}
-                          </div>
-                          <div className="text-xs opacity-60 mt-2">
-                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {chatLoading && (
-                      <div className="flex justify-start">
-                        <div className="bg-slate-700 text-slate-200 p-4 rounded-2xl">
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span className="text-sm">Analyzing...</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                  <div>
+                    <h3 className="text-xl font-bold">Ask Questions About {companyName}</h3>
+                    <p className="text-blue-100 text-sm">Get deeper insights and update your analysis</p>
                   </div>
-                  
-                  {/* Chat Input */}
-                  <div className="p-6 border-t border-slate-700">
-                    <form onSubmit={handleChatSubmit} className="space-y-3">
-                      <div className="relative">
-                        <textarea
-                          value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value)}
-                          placeholder="Ask about the analysis or provide new information..."
-                          className="w-full px-4 py-3 pr-20 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                          rows="3"
-                          disabled={chatLoading}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleChatSubmit(e);
-                            }
-                          }}
-                        />
-                        <div className="absolute bottom-3 right-3 flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="p-2 text-slate-400 hover:text-white transition-colors"
-                            title="Attach file"
-                            disabled={processingFiles}
-                          >
-                            {processingFiles ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Paperclip className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            type="submit"
-                            disabled={!chatInput.trim() || chatLoading}
-                            className="p-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-                          >
-                            <Send className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Quick Actions */}
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => setChatInput("What are the key risks for this company?")}
-                          className="text-xs px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-full transition-colors"
-                        >
-                          Key Risks?
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setChatInput("What adjacent markets show the most promise?")}
-                          className="text-xs px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-full transition-colors"
-                        >
-                          Best Opportunities?
-                        </button>
-                        {uploadedFiles.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setChatInput("Based on the uploaded files, what new insights can you provide about this company?")}
-                            className="text-xs px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-full transition-colors"
-                          >
-                            📎 Analyze Files
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setChatInput("The company is exploring monetizing traffic via ads. Please update the report with this information.")}
-                          className="text-xs px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors"
-                        >
-                          Update Report
-                        </button>
-                      </div>
-                    </form>
+                </div>
+                <button
+                  onClick={() => setShowChat(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  title="Hide chat section"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Instructions */}
+              <div className="mt-4 p-4 bg-white/10 rounded-lg">
+                <h4 className="font-semibold mb-2 text-blue-100">💡 What you can do:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-100">
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4" />
+                    <span>Ask specific questions about any section</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Upload files for additional context</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Request report updates with new info</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4" />
+                    <span>Explore scenarios and implications</span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+            
+            {/* Chat Messages */}
+            <div 
+              ref={chatContainerRef}
+              className="h-96 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-800/50"
+              style={{ scrollbarWidth: 'thin' }}
+            >
+              <div className="space-y-4">
+                {chatMessages.map((message) => (
+                  <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                      message.type === 'user' 
+                        ? 'bg-blue-600 text-white' 
+                        : message.isError
+                          ? 'bg-red-100 text-red-800 border border-red-200'
+                          : message.isReportUpdate
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            : message.isFileUpload
+                              ? 'bg-green-100 text-green-800 border border-green-200'
+                              : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600'
+                    }`}>
+                      {message.isReportUpdate && (
+                        <div className="flex items-center gap-2 mb-2 text-emerald-600 font-semibold text-sm">
+                          <RefreshCw className="w-4 h-4" />
+                          Report Updated
+                        </div>
+                      )}
+                      {message.isFileUpload && (
+                        <div className="flex items-center gap-2 mb-2 text-green-600 font-semibold text-sm">
+                          <Upload className="w-4 h-4" />
+                          Files Processed
+                        </div>
+                      )}
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {message.content}
+                      </div>
+                      <div className="text-xs opacity-60 mt-2">
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 px-4 py-3 rounded-2xl">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">Analyzing...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Chat Input */}
+            <div className="p-6 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700">
+              <form onSubmit={handleChatSubmit} className="space-y-4">
+                <div className="relative">
+                  <textarea
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask about the analysis, provide new information, or request updates..."
+                    className="w-full px-4 py-3 pr-16 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
+                    rows="3"
+                    disabled={chatLoading}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleChatSubmit(e);
+                      }
+                    }}
+                  />
+                  <div className="absolute bottom-3 right-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                      title="Attach file"
+                      disabled={processingFiles}
+                    >
+                      {processingFiles ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Paperclip className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!chatInput.trim() || chatLoading}
+                      className="p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Quick Actions */}
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setChatInput("What are the key risks for this company?")}
+                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                  >
+                    💡 Key Risks?
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChatInput("What adjacent markets show the most promise?")}
+                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                  >
+                    🚀 Best Opportunities?
+                  </button>
+                  {uploadedFiles.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setChatInput("Based on the uploaded files, what new insights can you provide about this company?")}
+                      className="text-xs px-3 py-1.5 bg-green-100 hover:bg-green-200 dark:bg-green-800 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded-lg transition-colors"
+                    >
+                      📎 Analyze Files
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setChatInput("Please update the report with new market developments and competitive changes.")}
+                    className="text-xs px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-800 dark:hover:bg-emerald-700 text-emerald-700 dark:text-emerald-300 rounded-lg transition-colors"
+                  >
+                    🔄 Update Report
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearChat}
+                    className="text-xs px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-700 dark:text-red-300 rounded-lg transition-colors"
+                  >
+                    🗑️ Clear Chat
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </section>
       )}
