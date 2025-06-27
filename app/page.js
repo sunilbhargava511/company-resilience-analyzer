@@ -523,7 +523,7 @@ Provide a helpful, detailed answer based on the report content. If the question 
       }
     }
     
-    // Handle Company Overview section specially
+    // Enhanced Company Overview section handling
     html = html.replace(/(#{1,3}\s*📊\s*Company Overview[\s\S]*?)(?=#{1,3}\s*[🔋⚠️🎯🚀📈💡🔮]|$)/gi, (match) => {
       let sectionContent = match;
       
@@ -533,63 +533,74 @@ Provide a helpful, detailed answer based on the report content. If the question 
           📊 Company Overview
         </h2>`);
       
-      // Look for key-value pairs in various formats
+      // Extract company data from multiple formats
       const companyData = {};
       
-      // Pattern 1: **Key**: Value format
-      const kvPattern1 = /\*\*([^*:]+)\*\*:\s*([^\n*]+)/g;
+      // Pattern 1: **Key**: Value format (handle longer values)
+      const kvPattern1 = /\*\*([^*:]+)\*\*:\s*([^\n*]+(?:\n(?!\*\*)[^\n*]+)*)/g;
       let match1;
       while ((match1 = kvPattern1.exec(sectionContent)) !== null) {
         const key = match1[1].trim();
-        const value = match1[2].trim();
-        if (key && value && !value.includes('|')) {
+        const value = match1[2].trim().replace(/\n/g, ' ');
+        if (key && value && !value.includes('|') && value.length > 0) {
           companyData[key] = value;
         }
       }
       
-      // Pattern 2: Key: Value format (without asterisks)
-      const kvPattern2 = /^([A-Za-z\s]+):\s*([^\n]+)$/gm;
+      // Pattern 2: Key: Value format (without asterisks, handle multi-line)
+      const kvPattern2 = /^([A-Za-z][A-Za-z\s\/&]+):\s*([^\n]+(?:\n(?![A-Za-z][A-Za-z\s\/&]+:)[^\n]+)*)/gm;
       let match2;
       while ((match2 = kvPattern2.exec(sectionContent)) !== null) {
         const key = match2[1].trim();
-        const value = match2[2].trim();
-        if (key && value && key.length < 30 && !value.includes('|') && !key.includes('#')) {
+        const value = match2[2].trim().replace(/\n/g, ' ');
+        if (key && value && key.length < 50 && !value.includes('|') && !key.includes('#') && value.length > 0) {
           companyData[key] = value;
         }
       }
       
-      // If we found company data, create a nice grid layout
+      // If we found company data, create a comprehensive grid layout
       if (Object.keys(companyData).length > 0) {
         let gridHTML = `
           <h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
             📊 Company Overview
           </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 my-8">
         `;
         
-        // Define field icons and colors
+        // Enhanced field configuration
         const fieldConfig = {
-          'Company': { icon: '🏢', color: 'blue' },
-          'Industry': { icon: '🏭', color: 'purple' },
-          'Business Model': { icon: '💼', color: 'green' },
-          'Market Position': { icon: '📈', color: 'emerald' },
-          'Key Products/Services': { icon: '🎯', color: 'indigo' },
-          'Customer Base': { icon: '👥', color: 'pink' },
-          'Founded': { icon: '📅', color: 'orange' },
-          'Headquarters': { icon: '🌍', color: 'cyan' },
-          'Employees': { icon: '👤', color: 'violet' }
+          'Company': { icon: '🏢', color: 'blue', span: 'md:col-span-2 xl:col-span-1' },
+          'Industry': { icon: '🏭', color: 'purple', span: '' },
+          'Business Model': { icon: '💼', color: 'green', span: 'md:col-span-2' },
+          'Market Position': { icon: '📈', color: 'emerald', span: 'md:col-span-2' },
+          'Key Products/Services': { icon: '🎯', color: 'indigo', span: 'md:col-span-2' },
+          'Customer Base': { icon: '👥', color: 'pink', span: 'md:col-span-2' },
+          'Founded': { icon: '📅', color: 'orange', span: '' },
+          'Headquarters': { icon: '🌍', color: 'cyan', span: '' },
+          'Employees': { icon: '👤', color: 'violet', span: '' }
         };
         
         // Create cards for each piece of data
         Object.entries(companyData).forEach(([key, value]) => {
-          const config = fieldConfig[key] || { icon: '📋', color: 'gray' };
+          const config = fieldConfig[key] || { icon: '📋', color: 'slate', span: '' };
+          
+          // Truncate very long values for display
+          let displayValue = value;
+          if (value.length > 200) {
+            displayValue = value.substring(0, 200) + '...';
+          }
+          
           gridHTML += `
-            <div class="bg-gradient-to-br from-${config.color}-50 to-${config.color}-100 dark:from-${config.color}-900/20 dark:to-${config.color}-800/20 p-6 rounded-xl border border-${config.color}-200 dark:border-${config.color}-700/50 hover:shadow-lg transition-all duration-300">
-              <div class="flex items-center gap-3 mb-3">
-                <span class="text-2xl">${config.icon}</span>
-                <h3 class="text-sm font-bold text-${config.color}-700 dark:text-${config.color}-300 uppercase tracking-wide">${key}</h3>
+            <div class="${config.span} bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 p-6 rounded-xl border border-slate-200 dark:border-slate-600 hover:shadow-xl hover:scale-105 transition-all duration-300 group">
+              <div class="flex items-start gap-3 mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <span class="text-xl text-white">${config.icon}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-2">${key}</h3>
+                  <p class="text-gray-800 dark:text-gray-200 leading-relaxed ${value.length > 100 ? 'text-sm' : 'text-base font-semibold'}">${displayValue}</p>
+                </div>
               </div>
-              <p class="text-lg font-semibold text-gray-800 dark:text-gray-200 leading-relaxed">${value}</p>
             </div>
           `;
         });
@@ -598,137 +609,11 @@ Provide a helpful, detailed answer based on the report content. If the question 
         return gridHTML;
       }
       
-    // Enhanced plain text company information handler
-    html = html.replace(/(📊\s*Company Overview[^<]*<\/h2>)([\s\S]*?)(?=<h[1-4]|$)/gi, (match, header, content) => {
-      // If content already has structured HTML, return as is
-      if (content.includes('<div class="grid') || content.includes('<table') || content.includes('<div class="my-8 p-')) {
-        return match;
-      }
-      
-      // Clean and process the content
-      const cleanContent = content.replace(/<[^>]*>/g, '').trim();
-      if (!cleanContent || cleanContent.length < 20) {
-        return match;
-      }
-      
-      // Try to extract structured information from paragraphs
-      const lines = cleanContent.split('\n').filter(line => line.trim());
-      const companyInfo = {};
-      const additionalText = [];
-      
-      lines.forEach(line => {
-        const cleanLine = line.trim();
-        
-        // Look for key-value patterns
-        if (cleanLine.includes(':') && cleanLine.length < 300) {
-          const colonIndex = cleanLine.indexOf(':');
-          const key = cleanLine.substring(0, colonIndex).trim();
-          const value = cleanLine.substring(colonIndex + 1).trim();
-          
-          // Valid key-value pair criteria
-          if (key && value && key.length < 50 && value.length > 0 && 
-              !key.includes('.') && !value.includes('|') && 
-              !key.toLowerCase().includes('http')) {
-            companyInfo[key] = value;
-          } else {
-            additionalText.push(cleanLine);
-          }
-        } else {
-          additionalText.push(cleanLine);
-        }
-      });
-      
-      // If we have some structured company info, create enhanced display
-      if (Object.keys(companyInfo).length > 0) {
-        let result = header;
-        
-        // Add grid for structured data
-        result += `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 my-8">`;
-        
-        const fieldConfig = {
-          'Company': { icon: '🏢', color: 'blue', span: 'md:col-span-2 xl:col-span-1' },
-          'Industry': { icon: '🏭', color: 'purple', span: '' },
-          'Business Model': { icon: '💼', color: 'green', span: 'md:col-span-2' },
-          'Market Position': { icon: '📈', color: 'emerald', span: 'md:col-span-2' },
-          'Key Products/Services': { icon: '🎯', color: 'indigo', span: 'md:col-span-2' },
-          'Products': { icon: '🎯', color: 'indigo', span: 'md:col-span-2' },
-          'Services': { icon: '⚙️', color: 'cyan', span: 'md:col-span-2' },
-          'Customer Base': { icon: '👥', color: 'pink', span: 'md:col-span-2' },
-          'Founded': { icon: '📅', color: 'orange', span: '' },
-          'Headquarters': { icon: '🌍', color: 'cyan', span: '' },
-          'Employees': { icon: '👤', color: 'violet', span: '' },
-          'Revenue': { icon: '💰', color: 'green', span: '' },
-          'Market Cap': { icon: '📊', color: 'blue', span: '' }
-        };
-        
-        Object.entries(companyInfo).forEach(([key, value]) => {
-          const config = fieldConfig[key] || { icon: '📋', color: 'slate', span: '' };
-          
-          // Smart truncation based on content length
-          let displayValue = value;
-          const isLongContent = value.length > 150;
-          if (isLongContent) {
-            displayValue = value.substring(0, 150) + '...';
-          }
-          
-          result += `
-            <div class="${config.span} bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 p-6 rounded-xl border border-slate-200 dark:border-slate-600 hover:shadow-xl hover:scale-105 transition-all duration-300 group">
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-${config.color}-500 to-${config.color}-600 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <span class="text-xl text-white">${config.icon}</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <h3 class="text-sm font-bold text-${config.color}-700 dark:text-${config.color}-300 uppercase tracking-wide mb-2">${key}</h3>
-                  <p class="text-gray-800 dark:text-gray-200 leading-relaxed ${isLongContent ? 'text-sm' : 'text-base font-semibold'}">${displayValue}</p>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-        
-        result += '</div>';
-        
-        // Add additional text that couldn't be structured
-        if (additionalText.length > 0) {
-          const additionalContent = additionalText.join(' ').trim();
-          if (additionalContent.length > 30) {
-            result += `
-              <div class="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-                <h4 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
-                  <span class="text-xl">📝</span>
-                  Additional Information
-                </h4>
-                <div class="text-blue-700 dark:text-blue-300 leading-relaxed">
-                  ${additionalContent.split('. ').map(sentence => 
-                    sentence.trim() ? `<p class="mb-3">${sentence.trim()}${sentence.endsWith('.') ? '' : '.'}</p>` : ''
-                  ).join('')}
-                </div>
-              </div>
-            `;
-          }
-        }
-        
-        return result;
-      }
-      
-      // If no structured info, create a clean text display
-      if (additionalText.length > 0) {
-        const textContent = additionalText.join('\n\n');
-        return header + `
-          <div class="my-8 p-8 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
-            <div class="prose prose-lg max-w-none text-blue-800 dark:text-blue-200">
-              ${textContent.split('\n\n').map(para => 
-                para.trim() ? `<p class="mb-4 leading-relaxed">${para.trim()}</p>` : ''
-              ).join('')}
-            </div>
-          </div>
-        `;
-      }
-      
-      return match;
+      // Final fallback
+      return sectionContent;
     });
-      
-        // Format remaining section headers
+    
+    // Format remaining section headers
     html = html.replace(/#{1,3}\s*🔋\s*Resilience Drivers/gi, 
       `<h2 class="text-3xl font-bold mt-12 mb-8 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 border-b-2 border-emerald-200 dark:border-emerald-700 pb-4">
         🔋 Resilience Drivers
@@ -754,21 +639,11 @@ Provide a helpful, detailed answer based on the report content. If the question 
         📈 Key Performance Metrics
       </h2>`);
 
-    html = html.replace(/#{1,3}\s*💡\s*Portfolio/gi, 
-      `<h2 class="text-3xl font-bold mt-12 mb-8 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 border-b-2 border-emerald-200 dark:border-emerald-700 pb-4">
-        💡 Portfolio Positioning
-      </h2>`);
-
-    html = html.replace(/#{1,3}\s*🔮\s*Key Scenarios/gi, 
-      `<h2 class="text-3xl font-bold mt-12 mb-8 text-amber-700 dark:text-amber-400 flex items-center gap-3 border-b-2 border-amber-200 dark:border-amber-700 pb-4">
-        🔮 Key Scenarios to Monitor
-      </h2>`);
-
     // Format subsection headers
     html = html.replace(/#{4}\s*([^#\n]+)/g, 
       `<h3 class="text-xl font-bold mt-8 mb-4 text-gray-800 dark:text-gray-200">$1</h3>`);
 
-    // Improved table parsing with better empty table handling
+    // Format tables with improved empty table handling
     html = html.replace(/\n\|([^\n]+)\|\n\|[\s:|-]+\|\n((?:\|[^\n]*\|\n?)*)/g, (match, headerLine, bodyLines) => {
       const headers = headerLine.split('|').filter(h => h.trim()).map(h => h.trim());
       const rawRows = bodyLines.trim().split('\n').filter(line => line.trim());
@@ -777,29 +652,6 @@ Provide a helpful, detailed answer based on the report content. If the question 
       );
       
       if (headers.length === 0) return match;
-      
-      // Check if this is the Company Overview section with empty data
-      const isCompanyOverview = headers.some(h => 
-        h.toLowerCase().includes('company') || 
-        h.toLowerCase().includes('industry') || 
-        h.toLowerCase().includes('business')
-      );
-      
-      // If Company Overview table is empty, don't render the table
-      if (isCompanyOverview && (rows.length === 0 || rows.every(row => row.length === 0))) {
-        return `
-          <div class="my-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="text-2xl">ℹ️</span>
-              <h3 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200">Company Information</h3>
-            </div>
-            <p class="text-yellow-700 dark:text-yellow-300">
-              Detailed company information will be populated based on the analysis. 
-              The AI is currently gathering comprehensive data about this organization.
-            </p>
-          </div>
-        `;
-      }
       
       let tableHtml = `
         <div class="overflow-x-auto my-8 rounded-lg shadow-lg">
@@ -818,14 +670,14 @@ Provide a helpful, detailed answer based on the report content. If the question 
             <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
       `;
       
-      // If no data rows or all empty, create informational message
+      // If no data rows, create informational message
       if (rows.length === 0 || rows.every(row => row.length === 0)) {
         tableHtml += `<tr class="bg-white dark:bg-gray-800">`;
         tableHtml += `<td colspan="${headers.length}" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
           <div class="flex flex-col items-center gap-3">
             <span class="text-4xl">📊</span>
             <p class="text-lg font-medium">Data is being analyzed</p>
-            <p class="text-sm">Comprehensive information will be displayed here once processing is complete.</p>
+            <p class="text-sm">Information will be displayed here once available.</p>
           </div>
         </td>`;
         tableHtml += '</tr>';
