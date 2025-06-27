@@ -523,11 +523,71 @@ Provide a helpful, detailed answer based on the report content. If the question 
       }
     }
     
-    // Format major section headers
+    // Format major section headers with better Company Overview handling
     html = html.replace(/#{1,3}\s*📊\s*Company Overview/gi, 
       `<h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
         📊 Company Overview
       </h2>`);
+
+    // Handle Company Overview content that might not be in table format
+    html = html.replace(/(📊\s*Company Overview[\s\S]*?)(?=(?:🔋|⚠️|🎯|🚀|📈|💡|🔮|#{1,3}\s)|$)/gi, (match, section) => {
+      // If section contains table markup, let table parsing handle it
+      if (section.includes('|') && section.includes('---')) {
+        return section;
+      }
+      
+      // Look for key-value pairs in the section
+      const kvPattern = /\*\*([^*]+)\*\*:?\s*([^*\n]+)/g;
+      let kvMatches = [];
+      let kvMatch;
+      
+      while ((kvMatch = kvPattern.exec(section)) !== null) {
+        kvMatches.push({ key: kvMatch[1].trim(), value: kvMatch[2].trim() });
+      }
+      
+      // If we found key-value pairs, format them nicely
+      if (kvMatches.length > 0) {
+        let formattedSection = section.replace(/(📊\s*Company Overview[^\n]*\n)/i, '$1');
+        
+        // Create a grid layout for the key-value pairs
+        let kvGrid = `
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-8">
+        `;
+        
+        kvMatches.forEach(({ key, value }) => {
+          kvGrid += `
+            <div class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 p-4 rounded-xl border border-slate-200 dark:border-slate-600">
+              <div class="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide mb-2">${key}</div>
+              <div class="text-lg font-medium text-slate-900 dark:text-slate-100">${value}</div>
+            </div>
+          `;
+        });
+        
+        kvGrid += '</div>';
+        
+        // Replace the key-value pairs in the original section with the grid
+        let cleanedSection = formattedSection;
+        kvMatches.forEach(({ key, value }) => {
+          const pattern = new RegExp(`\\*\\*${key.replace(/[.*+?^${}()|[\]\\]/g, '\\    // Format major section headers
+    html = html.replace(/#{1,3}\s*📊\s*Company Overview/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
+        📊 Company Overview
+      </h2>`);')}\\*\\*:?\\s*${value.replace(/[.*+?^${}()|[\]\\]/g, '\\    // Format major section headers
+    html = html.replace(/#{1,3}\s*📊\s*Company Overview/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-gray-900 dark:text-white flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
+        📊 Company Overview
+      </h2>`);')}`, 'gi');
+          cleanedSection = cleanedSection.replace(pattern, '');
+        });
+        
+        // Insert the grid after the header
+        cleanedSection = cleanedSection.replace(/(📊\s*Company Overview[^\n]*\n)/i, '$1' + kvGrid);
+        
+        return cleanedSection;
+      }
+      
+      return section;
+    });
       
     html = html.replace(/#{1,3}\s*🔋\s*Resilience Drivers/gi, 
       `<h2 class="text-3xl font-bold mt-12 mb-8 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 border-b-2 border-emerald-200 dark:border-emerald-700 pb-4">
@@ -558,14 +618,14 @@ Provide a helpful, detailed answer based on the report content. If the question 
     html = html.replace(/#{4}\s*([^#\n]+)/g, 
       `<h3 class="text-xl font-bold mt-8 mb-4 text-gray-800 dark:text-gray-200">$1</h3>`);
 
-    // Format tables more simply
+    // Format tables with improved parsing
     html = html.replace(/\n\|([^\n]+)\|\n\|[\s:|-]+\|\n((?:\|[^\n]+\|\n?)*)/g, (match, headerLine, bodyLines) => {
       const headers = headerLine.split('|').filter(h => h.trim()).map(h => h.trim());
       const rows = bodyLines.trim().split('\n').filter(line => line.trim()).map(line => 
         line.split('|').filter(cell => cell.trim()).map(cell => cell.trim())
       );
       
-      if (headers.length === 0 || rows.length === 0) return match;
+      if (headers.length === 0) return match;
       
       let tableHtml = `
         <div class="overflow-x-auto my-8 rounded-lg shadow-lg">
@@ -584,14 +644,81 @@ Provide a helpful, detailed answer based on the report content. If the question 
             <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
       `;
       
-      rows.forEach((row, index) => {
+      // If no data rows, create empty row to show structure
+      if (rows.length === 0) {
+        tableHtml += `<tr class="bg-white dark:bg-gray-800">`;
+        headers.forEach(() => {
+          tableHtml += `<td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">-</td>`;
+        });
+        tableHtml += '</tr>';
+      } else {
+        rows.forEach((row, index) => {
+          const bgClass = index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700';
+          tableHtml += `<tr class="${bgClass} hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">`;
+          
+          // Ensure we have the right number of cells
+          for (let i = 0; i < headers.length; i++) {
+            const cell = row[i] || '-';
+            let cellContent = cell.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            tableHtml += `<td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">${cellContent}</td>`;
+          }
+          
+          tableHtml += '</tr>';
+        });
+      }
+      
+      tableHtml += `
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      return tableHtml;
+    });
+
+    // Also handle simpler table formats that might not have header separators
+    html = html.replace(/\n\|([^\n]+)\|\n((?:\|[^\n]+\|\n?)+)/g, (match, firstLine, otherLines) => {
+      // Check if this looks like a table that wasn't caught by the previous regex
+      if (match.includes('|---|') || match.includes('|:-|') || match.includes('|-:|')) {
+        return match; // Already handled by previous regex
+      }
+      
+      const allLines = [firstLine, ...otherLines.trim().split('\n').filter(line => line.trim())];
+      const rows = allLines.map(line => 
+        line.split('|').filter(cell => cell.trim()).map(cell => cell.trim())
+      );
+      
+      if (rows.length < 2) return match;
+      
+      const headers = rows[0];
+      const dataRows = rows.slice(1);
+      
+      let tableHtml = `
+        <div class="overflow-x-auto my-8 rounded-lg shadow-lg">
+          <table class="w-full border-collapse bg-white dark:bg-gray-800">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr>
+      `;
+      
+      headers.forEach(header => {
+        tableHtml += `<th class="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">${header}</th>`;
+      });
+      
+      tableHtml += `
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+      `;
+      
+      dataRows.forEach((row, index) => {
         const bgClass = index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700';
         tableHtml += `<tr class="${bgClass} hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">`;
         
-        row.forEach(cell => {
+        for (let i = 0; i < headers.length; i++) {
+          const cell = row[i] || '-';
           let cellContent = cell.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
           tableHtml += `<td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">${cellContent}</td>`;
-        });
+        }
         
         tableHtml += '</tr>';
       });
