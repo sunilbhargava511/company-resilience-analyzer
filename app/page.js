@@ -598,10 +598,137 @@ Provide a helpful, detailed answer based on the report content. If the question 
         return gridHTML;
       }
       
-      // If no structured data found, return original content with better header
-      return sectionContent;
+    // Enhanced plain text company information handler
+    html = html.replace(/(📊\s*Company Overview[^<]*<\/h2>)([\s\S]*?)(?=<h[1-4]|$)/gi, (match, header, content) => {
+      // If content already has structured HTML, return as is
+      if (content.includes('<div class="grid') || content.includes('<table') || content.includes('<div class="my-8 p-')) {
+        return match;
+      }
+      
+      // Clean and process the content
+      const cleanContent = content.replace(/<[^>]*>/g, '').trim();
+      if (!cleanContent || cleanContent.length < 20) {
+        return match;
+      }
+      
+      // Try to extract structured information from paragraphs
+      const lines = cleanContent.split('\n').filter(line => line.trim());
+      const companyInfo = {};
+      const additionalText = [];
+      
+      lines.forEach(line => {
+        const cleanLine = line.trim();
+        
+        // Look for key-value patterns
+        if (cleanLine.includes(':') && cleanLine.length < 300) {
+          const colonIndex = cleanLine.indexOf(':');
+          const key = cleanLine.substring(0, colonIndex).trim();
+          const value = cleanLine.substring(colonIndex + 1).trim();
+          
+          // Valid key-value pair criteria
+          if (key && value && key.length < 50 && value.length > 0 && 
+              !key.includes('.') && !value.includes('|') && 
+              !key.toLowerCase().includes('http')) {
+            companyInfo[key] = value;
+          } else {
+            additionalText.push(cleanLine);
+          }
+        } else {
+          additionalText.push(cleanLine);
+        }
+      });
+      
+      // If we have some structured company info, create enhanced display
+      if (Object.keys(companyInfo).length > 0) {
+        let result = header;
+        
+        // Add grid for structured data
+        result += `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 my-8">`;
+        
+        const fieldConfig = {
+          'Company': { icon: '🏢', color: 'blue', span: 'md:col-span-2 xl:col-span-1' },
+          'Industry': { icon: '🏭', color: 'purple', span: '' },
+          'Business Model': { icon: '💼', color: 'green', span: 'md:col-span-2' },
+          'Market Position': { icon: '📈', color: 'emerald', span: 'md:col-span-2' },
+          'Key Products/Services': { icon: '🎯', color: 'indigo', span: 'md:col-span-2' },
+          'Products': { icon: '🎯', color: 'indigo', span: 'md:col-span-2' },
+          'Services': { icon: '⚙️', color: 'cyan', span: 'md:col-span-2' },
+          'Customer Base': { icon: '👥', color: 'pink', span: 'md:col-span-2' },
+          'Founded': { icon: '📅', color: 'orange', span: '' },
+          'Headquarters': { icon: '🌍', color: 'cyan', span: '' },
+          'Employees': { icon: '👤', color: 'violet', span: '' },
+          'Revenue': { icon: '💰', color: 'green', span: '' },
+          'Market Cap': { icon: '📊', color: 'blue', span: '' }
+        };
+        
+        Object.entries(companyInfo).forEach(([key, value]) => {
+          const config = fieldConfig[key] || { icon: '📋', color: 'slate', span: '' };
+          
+          // Smart truncation based on content length
+          let displayValue = value;
+          const isLongContent = value.length > 150;
+          if (isLongContent) {
+            displayValue = value.substring(0, 150) + '...';
+          }
+          
+          result += `
+            <div class="${config.span} bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 p-6 rounded-xl border border-slate-200 dark:border-slate-600 hover:shadow-xl hover:scale-105 transition-all duration-300 group">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-${config.color}-500 to-${config.color}-600 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <span class="text-xl text-white">${config.icon}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-bold text-${config.color}-700 dark:text-${config.color}-300 uppercase tracking-wide mb-2">${key}</h3>
+                  <p class="text-gray-800 dark:text-gray-200 leading-relaxed ${isLongContent ? 'text-sm' : 'text-base font-semibold'}">${displayValue}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        result += '</div>';
+        
+        // Add additional text that couldn't be structured
+        if (additionalText.length > 0) {
+          const additionalContent = additionalText.join(' ').trim();
+          if (additionalContent.length > 30) {
+            result += `
+              <div class="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+                <h4 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
+                  <span class="text-xl">📝</span>
+                  Additional Information
+                </h4>
+                <div class="text-blue-700 dark:text-blue-300 leading-relaxed">
+                  ${additionalContent.split('. ').map(sentence => 
+                    sentence.trim() ? `<p class="mb-3">${sentence.trim()}${sentence.endsWith('.') ? '' : '.'}</p>` : ''
+                  ).join('')}
+                </div>
+              </div>
+            `;
+          }
+        }
+        
+        return result;
+      }
+      
+      // If no structured info, create a clean text display
+      if (additionalText.length > 0) {
+        const textContent = additionalText.join('\n\n');
+        return header + `
+          <div class="my-8 p-8 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+            <div class="prose prose-lg max-w-none text-blue-800 dark:text-blue-200">
+              ${textContent.split('\n\n').map(para => 
+                para.trim() ? `<p class="mb-4 leading-relaxed">${para.trim()}</p>` : ''
+              ).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      return match;
     });
       
+        // Format remaining section headers
     html = html.replace(/#{1,3}\s*🔋\s*Resilience Drivers/gi, 
       `<h2 class="text-3xl font-bold mt-12 mb-8 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 border-b-2 border-emerald-200 dark:border-emerald-700 pb-4">
         🔋 Resilience Drivers
@@ -625,6 +752,16 @@ Provide a helpful, detailed answer based on the report content. If the question 
     html = html.replace(/#{1,3}\s*📈\s*Key Performance/gi, 
       `<h2 class="text-3xl font-bold mt-12 mb-8 text-indigo-700 dark:text-indigo-400 flex items-center gap-3 border-b-2 border-indigo-200 dark:border-indigo-700 pb-4">
         📈 Key Performance Metrics
+      </h2>`);
+
+    html = html.replace(/#{1,3}\s*💡\s*Portfolio/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 border-b-2 border-emerald-200 dark:border-emerald-700 pb-4">
+        💡 Portfolio Positioning
+      </h2>`);
+
+    html = html.replace(/#{1,3}\s*🔮\s*Key Scenarios/gi, 
+      `<h2 class="text-3xl font-bold mt-12 mb-8 text-amber-700 dark:text-amber-400 flex items-center gap-3 border-b-2 border-amber-200 dark:border-amber-700 pb-4">
+        🔮 Key Scenarios to Monitor
       </h2>`);
 
     // Format subsection headers
