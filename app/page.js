@@ -1173,4 +1173,357 @@ What would you like to explore first?`;
 
                     {/* Error Display */}
                     {error && (
-                      <di
+                      <div className="flex items-center gap-3 p-5 bg-red-500/20 border-2 border-red-400/50 text-red-200 rounded-2xl backdrop-blur-sm animate-fade-in">
+                        <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <AlertCircle className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-base">{error}</span>
+                      </div>
+                    )}
+
+                    {/* Action Button */}
+                    <button
+                      onClick={analyzeCompany}
+                      disabled={!companyName || loading}
+                      className="w-full group relative overflow-hidden bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 hover:from-emerald-700 hover:via-blue-700 hover:to-purple-700 text-white px-8 py-6 rounded-2xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50"
+                    >
+                      {/* Background Animation */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+                      
+                      <div className="relative z-10 flex items-center justify-center gap-4">
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <span>Analyzing {companyName}...</span>
+                            <div className="flex gap-1">
+                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Activity className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
+                            <span>Generate Interactive Analysis</span>
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+                          </>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Advanced Settings Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvanced(!showAdvanced)}
+                      className="w-full flex items-center justify-center gap-3 text-purple-300 hover:text-white transition-all duration-200 group bg-white/5 hover:bg-white/10 px-4 py-3 rounded-xl border border-white/10 hover:border-white/20"
+                    >
+                      <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                      <span className="font-medium">Advanced Settings</span>
+                      <ChevronRight className={`w-4 h-4 ${showAdvanced ? 'rotate-90' : ''} transition-transform duration-300`} />
+                    </button>
+
+                    {/* Advanced Settings */}
+                    {showAdvanced && (
+                      <div className="bg-white/5 rounded-2xl p-6 border border-white/10 animate-slide-in">
+                        <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                          <Cpu className="w-4 h-4 text-emerald-400" />
+                          Advanced Settings
+                        </h3>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm text-white/80 mb-2">AI Model</label>
+                            <select
+                              value={model}
+                              onChange={(e) => setModel(e.target.value)}
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition appearance-none cursor-pointer text-base"
+                            >
+                              {models.map((m) => (
+                                <option key={m.id} value={m.id} className="bg-slate-800 text-white py-2">
+                                  {m.name} - {m.description}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Trust Indicators */}
+                    <div className="flex items-center justify-center gap-6 text-xs text-white/60">
+                      <div className="flex items-center gap-1">
+                        <Activity className="w-3 h-3" />
+                        <span>Resilience Framework</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Search className="w-3 h-3" />
+                        <span>Web Search</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Award className="w-3 h-3" />
+                        <span>Interactive AI</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Stats Section */}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { icon: BarChart3, label: "Companies Analyzed", value: "10,000+", bgColor: "from-emerald-500/20 to-emerald-600/20", iconColor: "text-emerald-400" },
+              { icon: Activity, label: "Resilience Accuracy", value: "99.9%", bgColor: "from-blue-500/20 to-blue-600/20", iconColor: "text-blue-400" },
+              { icon: Clock, label: "Analysis Time", value: "<30s", bgColor: "from-purple-500/20 to-purple-600/20", iconColor: "text-purple-400" }
+            ].map((stat, index) => (
+              <div key={index} className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300 group">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 bg-gradient-to-br ${stat.bgColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">{stat.value}</div>
+                    <div className="text-sm text-white/60">{stat.label}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+
+      {/* Enhanced Results Section */}
+      {result && (
+        <section className="mt-8 max-w-6xl mx-auto px-6">
+          {/* Enhanced sticky header with more actions */}
+          <div className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-5 mb-8 rounded-t-xl shadow-lg">
+            <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-3xl font-bold flex items-center gap-3">
+                <Activity className="text-emerald-400 w-8 h-8" />
+                {companyName} Interactive Analysis v{reportVersion}
+                {showChat && (
+                  <button
+                    onClick={scrollToChat}
+                    className="ml-4 px-3 py-1 text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition flex items-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Chat
+                  </button>
+                )}
+              </h2>
+              <div className="flex gap-3 flex-wrap">
+                {!showChat && (
+                  <button
+                    onClick={scrollToChat}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg transition"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="hidden sm:inline">Ask Questions</span>
+                  </button>
+                )}
+                <button
+                  onClick={downloadReport}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+                <button
+                  onClick={copyToClipboard}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition"
+                >
+                  <Copy className="w-4 h-4" />
+                  <span className="hidden sm:inline">Copy</span>
+                </button>
+                <button
+                  onClick={shareAnalysis}
+                  className="flex items-center gap-2 px-4 py-2 bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 rounded-lg transition"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Share</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Main results content with enhanced styling */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
+            <div 
+              id="analysis-content"
+              className="animate-fade-in"
+              dangerouslySetInnerHTML={{ __html: formatResult(result) }}
+            />
+          </div>
+
+          {/* Interactive Chat Section */}
+          {result && (
+            <div id="chat-section" className="mt-8">
+              <div className="bg-gradient-to-br from-white/10 via-white/5 to-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
+                <div className="bg-gradient-to-r from-purple-600/20 via-blue-600/20 to-emerald-600/20 p-6 border-b border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                        <MessageCircle className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-white">Interactive Analysis Assistant</h3>
+                        <p className="text-white/70">Ask questions, get updates, explore insights with real-time web search</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={clearChat}
+                        className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition"
+                        title="Clear chat"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setShowChat(!showChat)}
+                        className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition"
+                        title={showChat ? "Minimize chat" : "Expand chat"}
+                      >
+                        {showChat ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {showChat && (
+                  <div className="p-6">
+                    {/* Chat Messages */}
+                    <div 
+                      ref={chatContainerRef}
+                      className="h-96 overflow-y-auto mb-6 space-y-4 bg-black/20 rounded-2xl p-4 border border-white/10"
+                    >
+                      {chatMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div className={`max-w-[80%] ${
+                            message.type === 'user' 
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl rounded-tr-md p-4'
+                              : message.isError
+                                ? 'bg-red-500/20 border border-red-500/30 text-red-200 rounded-2xl rounded-tl-md p-4'
+                                : message.isSearching
+                                  ? 'bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 text-emerald-200 rounded-2xl rounded-tl-md p-4'
+                                  : 'bg-white/10 text-white rounded-2xl rounded-tl-md p-4 border border-white/20'
+                          }`}>
+                            <div className="prose prose-sm prose-invert max-w-none">
+                              <div dangerouslySetInnerHTML={{ 
+                                __html: message.content.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                              }} />
+                            </div>
+                            {message.usedWebSearch && (
+                              <div className="mt-2 text-xs opacity-70 flex items-center gap-1">
+                                <Search className="w-3 h-3" />
+                                <span>Enhanced with current web data</span>
+                              </div>
+                            )}
+                            {message.isReportUpdate && (
+                              <div className="mt-2 text-xs opacity-70 flex items-center gap-1">
+                                <RefreshCw className="w-3 h-3" />
+                                <span>Report updated</span>
+                              </div>
+                            )}
+                            <div className="text-xs opacity-50 mt-2">
+                              {message.timestamp.toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {chatLoading && (
+                        <div className="flex justify-start">
+                          <div className="bg-white/10 rounded-2xl rounded-tl-md p-4 border border-white/20">
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span className="text-white/70">Thinking...</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Chat Input */}
+                    <form onSubmit={handleChatSubmit} className="flex gap-3">
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          placeholder="Ask about recent performance, competitors, market trends, or request report updates..."
+                          disabled={chatLoading}
+                          className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition"
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40">
+                          <MessageCircle className="w-4 h-4" />
+                        </div>
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={!chatInput.trim() || chatLoading}
+                        className="px-6 py-4 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white rounded-2xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2 group"
+                      >
+                        <Send className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                        <span className="hidden sm:inline">Send</span>
+                      </button>
+                    </form>
+
+                    {/* Quick Questions */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {[
+                        "Latest earnings and performance",
+                        "Current competitive position", 
+                        "Recent industry trends",
+                        "Update report with new data"
+                      ].map((question) => (
+                        <button
+                          key={question}
+                          onClick={() => setChatInput(question)}
+                          className="px-3 py-2 text-sm bg-white/5 hover:bg-white/10 text-white/80 hover:text-white rounded-lg transition border border-white/10 hover:border-white/20"
+                        >
+                          {question}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Enhanced Footer */}
+      <footer className="relative z-10 py-12 text-center mt-16">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <Shield className="w-5 h-5 text-emerald-400" />
+              <span className="text-slate-300">Secure & Private Analysis</span>
+              <span className="text-slate-500">•</span>
+              <Activity className="w-5 h-5 text-blue-400" />
+              <span className="text-slate-300">Complexity Investing Framework</span>
+              <span className="text-slate-500">•</span>
+              <Cpu className="w-5 h-5 text-purple-400" />
+              <span className="text-slate-300">Powered by Claude AI</span>
+            </div>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Advanced resilience evaluation platform with real-time web search capabilities. 
+              Assess adaptability, optionality, and long-term value creation with interactive AI analysis.
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-6 text-xs text-slate-500">
+              <span>Interactive Analysis</span>
+              <span>•</span>
+              <span>Real-time Data</span>
+              <span>•</span>
+              <span>Web Search Enhanced</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
