@@ -246,38 +246,39 @@ export default function Home() {
       const welcomeMessage = uploadedFiles.length > 0 
         ? `🎉 **Enhanced AI Analysis Ready for ${companyName}!**
 
-Your uploaded files (${uploadedFiles.map(f => f.name).join(', ')}) have been integrated. I now have comprehensive knowledge about business, finance, markets, and strategy to provide deep analysis.
+Your uploaded files (${uploadedFiles.map(f => f.name).join(', ')}) have been integrated. I now have comprehensive knowledge, web search capabilities, and your document context.
 
 **🧠 What I can help you explore:**
-• **Deep-dive analysis** - Get detailed insights beyond the report
-• **Competitive intelligence** - Compare with industry peers and competitors  
-• **Market trend analysis** - Understand how external factors affect resilience
-• **Strategic scenarios** - Explore bull/bear/base case outcomes
-• **Risk mitigation** - Identify threats and develop countermeasures
-• **Investment strategy** - Get complexity investing recommendations
+• **Real-time analysis** - I can search the web for current information
+• **Deep-dive insights** - Get detailed analysis beyond the report
+• **Competitive intelligence** - Current competitor actions and market position  
+• **Market trend analysis** - Latest industry developments and disruptions
+• **Financial performance** - Most recent earnings and financial metrics
+• **Strategic scenarios** - Updated bull/bear/base case outcomes
+• **Risk assessment** - Current threats and mitigation strategies
 • **File analysis** - Extract insights from your uploaded documents
-• **Report updates** - Incorporate new information and developments
+• **Report updates** - Incorporate latest market developments
 
-**💡 Try asking complex questions like:**
-"How does this compare to Tesla's resilience strategy?" or "What market trends could disrupt this business model?" or "Analyze the downside scenarios for this investment."
+**💡 Try asking questions like:**
+"What's the latest news about this company and how does it affect resilience?" or "How does recent performance compare to competitors?" or "What current market trends could disrupt this business?"
 
 What would you like to explore first?`
         : `🎉 **Enhanced AI Analysis Ready for ${companyName}!**
 
-I have comprehensive knowledge about business, finance, markets, and strategy to provide deep analysis beyond the report.
+I have comprehensive business knowledge AND web search capabilities to provide the most current analysis possible.
 
 **🧠 What I can help you explore:**
-• **Deep-dive analysis** - Get detailed insights beyond the report
-• **Competitive intelligence** - Compare with industry peers and competitors  
-• **Market trend analysis** - Understand how external factors affect resilience
-• **Strategic scenarios** - Explore bull/bear/base case outcomes
-• **Risk mitigation** - Identify threats and develop countermeasures
-• **Investment strategy** - Get complexity investing recommendations
-• **Upload files** 📎 for additional context and analysis
-• **Report updates** - Incorporate new information and developments
+• **Real-time analysis** - I can search for current company information
+• **Latest financial data** - Recent earnings, performance metrics, market cap
+• **Current competitive landscape** - Recent competitor moves and market share
+• **Industry trends** - Latest developments affecting the business
+• **Strategic developments** - Recent partnerships, acquisitions, expansions
+• **Risk assessment** - Current threats and regulatory changes
+• **Market analysis** - How recent trends impact the business model
+• **Investment updates** - Latest information affecting investment thesis
 
-**💡 Try asking complex questions like:**
-"How does this compare to industry leaders?" or "What market trends could disrupt this business?" or "What's the downside scenario for this investment?"
+**💡 Ask about current information like:**
+"Latest earnings and financial performance" or "Recent competitive developments" or "Current industry trends affecting this company"
 
 What would you like to explore first?`;
 
@@ -348,19 +349,39 @@ What would you like to explore first?`;
     };
 
     setChatMessages(prev => [...prev, userMessage]);
+    
+    // Check if this might trigger web search for user feedback
+    const searchTriggers = ['recent', 'latest', 'current', 'news', 'earnings', 'competitor', 'vs', 'versus', 'performance', 'compare', 'trends', 'market', 'search', 'find', 'look up'];
+    const likelyToSearch = searchTriggers.some(word => chatInput.toLowerCase().includes(word));
+    
+    const currentInput = chatInput; // Store before clearing
     setChatInput('');
     setChatLoading(true);
 
+    // Add searching indicator if likely to search
+    let searchingMessageId = null;
+    if (likelyToSearch) {
+      searchingMessageId = Date.now() + 0.5;
+      const searchingMessage = {
+        id: searchingMessageId,
+        type: 'assistant',
+        content: '🔍 **Analyzing with current data...**\n\nI\'m using web search to gather the latest information about ' + companyName + ' to provide you with comprehensive, up-to-date insights.',
+        timestamp: new Date(),
+        isSearching: true
+      };
+      setChatMessages(prev => [...prev, searchingMessage]);
+    }
+
     try {
       // Determine if this is a question or a report update request
-      const isUpdateRequest = chatInput.toLowerCase().includes('update') && 
-                            (chatInput.toLowerCase().includes('report') || 
-                             chatInput.toLowerCase().includes('analysis')) ||
-                            chatInput.toLowerCase().includes('redo') || 
-                            chatInput.toLowerCase().includes('incorporate') ||
-                            chatInput.toLowerCase().includes('add this') ||
-                            chatInput.toLowerCase().includes('use this info') ||
-                            chatInput.toLowerCase().includes('revise');
+      const isUpdateRequest = currentInput.toLowerCase().includes('update') && 
+                            (currentInput.toLowerCase().includes('report') || 
+                             currentInput.toLowerCase().includes('analysis')) ||
+                            currentInput.toLowerCase().includes('redo') || 
+                            currentInput.toLowerCase().includes('incorporate') ||
+                            currentInput.toLowerCase().includes('add this') ||
+                            currentInput.toLowerCase().includes('use this info') ||
+                            currentInput.toLowerCase().includes('revise');
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -368,7 +389,7 @@ What would you like to explore first?`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: chatInput,
+          message: currentInput,
           context: result,
           companyName,
           isUpdateRequest,
@@ -383,12 +404,19 @@ What would you like to explore first?`;
         throw new Error(data.error || 'Chat request failed');
       }
 
+      // Remove searching message if it was added
+      if (searchingMessageId) {
+        setChatMessages(prev => prev.filter(msg => msg.id !== searchingMessageId));
+      }
+
       const assistantMessage = {
         id: Date.now() + 1,
         type: 'assistant',
         content: data.result,
         timestamp: new Date(),
-        isReportUpdate: isUpdateRequest
+        isReportUpdate: isUpdateRequest,
+        usedWebSearch: data.usedWebSearch || false,
+        searchSummary: data.searchSummary
       };
 
       setChatMessages(prev => [...prev, assistantMessage]);
@@ -400,6 +428,11 @@ What would you like to explore first?`;
       }
 
     } catch (err) {
+      // Remove searching message if there was an error
+      if (searchingMessageId) {
+        setChatMessages(prev => prev.filter(msg => msg.id !== searchingMessageId));
+      }
+
       const errorMessage = {
         id: Date.now() + 1,
         type: 'assistant',
@@ -428,7 +461,7 @@ What would you like to explore first?`;
     setChatMessages([{
       id: Date.now(),
       type: 'assistant',
-      content: `Chat cleared! I'm ready to help you explore the ${companyName} analysis. What would you like to know?`,
+      content: `Chat cleared! I'm ready to help you explore the ${companyName} analysis with current web search capabilities. What would you like to know?`,
       timestamp: new Date()
     }]);
   };
@@ -869,8 +902,8 @@ What would you like to explore first?`;
             </h1>
             
             <p className="text-xl lg:text-2xl text-slate-300 max-w-4xl mx-auto leading-relaxed mb-8 font-light">
-              Advanced resilience evaluation with <strong className="text-emerald-400">interactive analysis</strong>. 
-              Ask questions, provide updates, and refine your assessment in real-time.
+              Advanced resilience evaluation with <strong className="text-emerald-400">real-time web search</strong>. 
+              Ask questions, get current data, and refine your assessment with live market intelligence.
             </p>
             
             {/* Enhanced trust indicators */}
@@ -880,18 +913,18 @@ What would you like to explore first?`;
                 <span>Resilience Framework</span>
               </div>
               <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4" />
-                <span>Interactive Q&A</span>
+                <Search className="w-4 h-4" />
+                <span>Real-time Web Search</span>
               </div>
               <div className="flex items-center gap-2">
-                <RefreshCw className="w-4 h-4" />
-                <span>Dynamic Updates</span>
+                <MessageCircle className="w-4 h-4" />
+                <span>Interactive Q&A</span>
               </div>
             </div>
             
             {/* Free to use indicator */}
             <div className="mt-6 inline-block px-6 py-3 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-400/30 rounded-full text-emerald-300 text-lg font-semibold">
-              ✨ Interactive Analysis - Ask Questions & Update Reports
+              ✨ Enhanced with Live Market Data - Ask Questions & Get Current Insights
             </div>
           </div>
         </header>
@@ -916,7 +949,7 @@ What would you like to explore first?`;
                     Interactive AI Analysis
                   </h2>
                   <p className="text-slate-300 text-lg">
-                    Generate reports, ask questions, and update analysis with new information
+                    Generate reports with current market data, ask questions, and update analysis with new information
                   </p>
                 </div>
               </div>
@@ -1085,31 +1118,35 @@ What would you like to explore first?`;
                     <div className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 rounded-2xl p-6 border border-emerald-400/20">
                       <div className="flex items-center gap-3 mb-4">
                         <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-xl flex items-center justify-center">
-                          <MessageCircle className="w-5 h-5 text-white" />
+                          <Search className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-white font-semibold">Interactive Analysis</h3>
-                          <p className="text-sm text-emerald-300">Ask questions & update reports</p>
+                          <h3 className="text-white font-semibold">Real-Time Web Search</h3>
+                          <p className="text-sm text-emerald-300">Live market data & analysis</p>
                         </div>
                         <div className="ml-auto">
                           <span className="bg-emerald-500/20 text-emerald-300 text-xs px-2 py-1 rounded-full font-medium">
-                            NEW
+                            ENHANCED
                           </span>
                         </div>
                       </div>
                       
                       <div className="space-y-3 text-sm">
                         <div className="flex items-center gap-3 text-white/80">
-                          <HelpCircle className="w-4 h-4 text-blue-400" />
-                          <span>Ask questions about any aspect</span>
+                          <Search className="w-4 h-4 text-green-400" />
+                          <span>Real-time market data & news</span>
                         </div>
                         <div className="flex items-center gap-3 text-white/80">
-                          <Upload className="w-4 h-4 text-green-400" />
+                          <HelpCircle className="w-4 h-4 text-blue-400" />
+                          <span>Ask questions about current events</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-white/80">
+                          <Upload className="w-4 h-4 text-purple-400" />
                           <span>Upload files for enhanced context</span>
                         </div>
                         <div className="flex items-center gap-3 text-white/80">
-                          <RefreshCw className="w-4 h-4 text-purple-400" />
-                          <span>Update reports with new insights</span>
+                          <RefreshCw className="w-4 h-4 text-pink-400" />
+                          <span>Update reports with live data</span>
                         </div>
                       </div>
                     </div>
@@ -1125,8 +1162,8 @@ What would you like to explore first?`;
                         <div className="text-sm font-medium text-white">Adjacent Markets</div>
                       </div>
                       <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 text-center hover:bg-purple-500/20 transition-colors">
-                        <Upload className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                        <div className="text-sm font-medium text-white">File Upload</div>
+                        <Search className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+                        <div className="text-sm font-medium text-white">Live Data Search</div>
                       </div>
                       <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-4 text-center hover:bg-pink-500/20 transition-colors">
                         <MessageCircle className="w-6 h-6 text-pink-400 mx-auto mb-2" />
@@ -1136,402 +1173,4 @@ What would you like to explore first?`;
 
                     {/* Error Display */}
                     {error && (
-                      <div className="flex items-center gap-3 p-5 bg-red-500/20 border-2 border-red-400/50 text-red-200 rounded-2xl backdrop-blur-sm animate-fade-in">
-                        <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-                          <AlertCircle className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="text-base">{error}</span>
-                      </div>
-                    )}
-
-                    {/* Action Button */}
-                    <button
-                      onClick={analyzeCompany}
-                      disabled={!companyName || loading}
-                      className="w-full group relative overflow-hidden bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 hover:from-emerald-700 hover:via-blue-700 hover:to-purple-700 text-white px-8 py-6 rounded-2xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
-                      
-                      <div className="relative z-10 flex items-center justify-center gap-4">
-                        {loading ? (
-                          <>
-                            <Loader2 className="w-6 h-6 animate-spin" />
-                            <span>Analyzing {companyName}...</span>
-                            <div className="flex gap-1">
-                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                              <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <Activity className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-                            <span>Generate Interactive Analysis</span>
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
-                          </>
-                        )}
-                      </div>
-                    </button>
-
-                    {/* Advanced Settings Toggle */}
-                    {showAdvanced && (
-                      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-                        <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                          <Cpu className="w-4 h-4 text-emerald-400" />
-                          Advanced Settings
-                        </h3>
-                        
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-sm text-white/80 mb-2">AI Model</label>
-                            <select
-                              value={model}
-                              onChange={(e) => setModel(e.target.value)}
-                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition appearance-none cursor-pointer text-base"
-                            >
-                              {models.map((m) => (
-                                <option key={m.id} value={m.id} className="bg-slate-800 text-white py-2">
-                                  {m.name} - {m.description}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => setShowAdvanced(!showAdvanced)}
-                      className="w-full flex items-center justify-center gap-3 text-purple-300 hover:text-white transition-all duration-200 group bg-white/5 hover:bg-white/10 px-4 py-3 rounded-xl border border-white/10 hover:border-white/20"
-                    >
-                      <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-                      <span className="font-medium">Advanced Settings</span>
-                      <ChevronRight className={`w-4 h-4 ${showAdvanced ? 'rotate-90' : ''} transition-transform duration-300`} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-
-      {/* Enhanced Results Section with Chat */}
-      {result && (
-        <section className="mt-8 max-w-6xl mx-auto px-6">
-          <div className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 -mx-6 px-6 py-5 mb-8 rounded-t-xl shadow-lg">
-            <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-3xl font-bold flex items-center gap-3">
-                <Activity className="text-emerald-400 w-8 h-8" />
-                {companyName} Analysis v{reportVersion}
-              </h2>
-              <div className="flex gap-3 flex-wrap">
-                <button
-                  onClick={scrollToChat}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg transition"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline">Ask Questions</span>
-                </button>
-                <button
-                  onClick={downloadReport}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded-lg transition"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">Download</span>
-                </button>
-                <button
-                  onClick={copyToClipboard}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg transition"
-                >
-                  <Copy className="w-4 h-4" />
-                  <span className="hidden sm:inline">Copy</span>
-                </button>
-                <button
-                  onClick={shareAnalysis}
-                  className="flex items-center gap-2 px-4 py-2 bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 rounded-lg transition"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Share</span>
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          {/* Main content area - full width */}
-          <div className="w-full">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
-              <div 
-                id="analysis-content"
-                className="animate-fade-in"
-                dangerouslySetInnerHTML={{ __html: formatResult(result) }}
-              />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Interactive Chat Section - Below Report */}
-      {result && showChat && (
-        <section id="chat-section" className="mt-8 max-w-4xl mx-auto px-6">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            {/* Chat Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">Enhanced AI Analysis for {companyName}</h3>
-                    <p className="text-blue-100 text-sm">Deep insights with comprehensive business knowledge</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowChat(false)}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                  title="Hide chat section"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              {/* Instructions */}
-              <div className="mt-4 p-4 bg-white/10 rounded-lg">
-                <h4 className="font-semibold mb-3 text-blue-100">🧠 Enhanced AI Analysis - Ask Anything:</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-100">
-                  <div className="flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4" />
-                    <span>Deep-dive into any report section</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    <span>Compare with industry competitors</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4" />
-                    <span>Explore market trends & opportunities</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Brain className="w-4 h-4" />
-                    <span>Strategic scenario analysis</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    <span>Risk assessment & mitigation</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Compass className="w-4 h-4" />
-                    <span>Investment recommendations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    <span>Upload files for additional context</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4" />
-                    <span>Update reports with new insights</span>
-                  </div>
-                </div>
-                <div className="mt-3 text-xs text-blue-200 italic">
-                  💡 This AI has comprehensive business knowledge and can provide detailed analysis beyond the report
-                </div>
-              </div>
-            </div>
-            
-            {/* Chat Messages */}
-            <div 
-              ref={chatContainerRef}
-              className="h-96 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-800/50"
-              style={{ scrollbarWidth: 'thin' }}
-            >
-              <div className="space-y-4">
-                {chatMessages.map((message) => (
-                  <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                      message.type === 'user' 
-                        ? 'bg-blue-600 text-white' 
-                        : message.isError
-                          ? 'bg-red-100 text-red-800 border border-red-200'
-                          : message.isReportUpdate
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                            : message.isFileUpload
-                              ? 'bg-green-100 text-green-800 border border-green-200'
-                              : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600'
-                    }`}>
-                      {message.isReportUpdate && (
-                        <div className="flex items-center gap-2 mb-2 text-emerald-600 font-semibold text-sm">
-                          <RefreshCw className="w-4 h-4" />
-                          Report Updated
-                        </div>
-                      )}
-                      {message.isFileUpload && (
-                        <div className="flex items-center gap-2 mb-2 text-green-600 font-semibold text-sm">
-                          <Upload className="w-4 h-4" />
-                          Files Processed
-                        </div>
-                      )}
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {message.content}
-                      </div>
-                      <div className="text-xs opacity-60 mt-2">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {chatLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 px-4 py-3 rounded-2xl">
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Analyzing...</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Chat Input */}
-            <div className="p-6 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700">
-              <form onSubmit={handleChatSubmit} className="space-y-4">
-                <div className="relative">
-                  <textarea
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Ask about the analysis, provide new information, or request updates..."
-                    className="w-full px-4 py-3 pr-16 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
-                    rows="3"
-                    disabled={chatLoading}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleChatSubmit(e);
-                      }
-                    }}
-                  />
-                  <div className="absolute bottom-3 right-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                      title="Attach file"
-                      disabled={processingFiles}
-                    >
-                      {processingFiles ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Paperclip className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!chatInput.trim() || chatLoading}
-                      className="p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Enhanced Quick Actions */}
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => setChatInput("What are the biggest risks that could hurt this company's resilience in the next 2-3 years? How can they mitigate these risks?")}
-                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                  >
-                    🚨 Key Risk Analysis
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChatInput("How does this company compare to its main competitors? What gives it a competitive advantage or puts it at a disadvantage?")}
-                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                  >
-                    ⚔️ Competitive Comparison
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChatInput("What are the most promising adjacent markets for expansion? Which ones offer the best risk-adjusted returns?")}
-                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                  >
-                    🚀 Growth Opportunities
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChatInput("Analyze three scenarios: bull case, bear case, and most likely case for this company over the next 5 years.")}
-                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                  >
-                    📊 Scenario Analysis
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChatInput("What current market trends and industry developments could significantly impact this company's business model?")}
-                    className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                  >
-                    📈 Market Trends
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChatInput("Based on complexity investing principles, what position size and investment strategy would you recommend for this company?")}
-                    className="text-xs px-3 py-1.5 bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-700 dark:text-blue-300 rounded-lg transition-colors"
-                  >
-                    💰 Investment Strategy
-                  </button>
-                  {uploadedFiles.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setChatInput("Based on the uploaded files, what additional insights can you provide about this company's financial performance, competitive position, or strategic direction?")}
-                      className="text-xs px-3 py-1.5 bg-green-100 hover:bg-green-200 dark:bg-green-800 dark:hover:bg-green-700 text-green-700 dark:text-green-300 rounded-lg transition-colors"
-                    >
-                      📎 Deep File Analysis
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setChatInput("Please update the report with the latest market developments, competitive changes, and any new strategic initiatives from this company.")}
-                    className="text-xs px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-800 dark:hover:bg-emerald-700 text-emerald-700 dark:text-emerald-300 rounded-lg transition-colors"
-                  >
-                    🔄 Update Report
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearChat}
-                    className="text-xs px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-700 dark:text-red-300 rounded-lg transition-colors"
-                  >
-                    🗑️ Clear Chat
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Enhanced Footer */}
-      <footer className="relative z-10 py-12 text-center mt-16">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <Shield className="w-5 h-5 text-emerald-400" />
-              <span className="text-slate-300">Secure & Private</span>
-              <span className="text-slate-500">•</span>
-              <MessageCircle className="w-5 h-5 text-blue-400" />
-              <span className="text-slate-300">Interactive Q&A</span>
-              <span className="text-slate-500">•</span>
-              <Upload className="w-5 h-5 text-purple-400" />
-              <span className="text-slate-300">File Upload</span>
-            </div>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Interactive resilience evaluation platform with file upload, real-time Q&A and report updates. 
-              Upload spreadsheets and documents, ask questions, and refine your analysis dynamically.
-            </p>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
+                      <di
