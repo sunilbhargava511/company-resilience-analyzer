@@ -140,7 +140,7 @@ Provide thorough, expert-level analysis that leverages your full knowledge while
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: model || 'claude-3-5-sonnet-20241022',
+        model: model || process.env.DEFAULT_MODEL || 'claude-sonnet-4-20250514',
         max_tokens: isUpdateRequest ? 8000 : 7000, // More tokens for comprehensive answers
         messages: [
           {

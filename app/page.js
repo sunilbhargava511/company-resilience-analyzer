@@ -50,12 +50,13 @@ import {
 
 export default function Home() {
   const [companyName, setCompanyName] = useState('');
-  const [model, setModel] = useState('claude-3-5-sonnet-20241022');
+  const [model, setModel] = useState('');
   const [tokenLimit, setTokenLimit] = useState('6000');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [defaultModel, setDefaultModel] = useState(null);
   
   // Interactive features state
   const [showChat, setShowChat] = useState(false);
@@ -66,11 +67,14 @@ export default function Home() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [fileContext, setFileContext] = useState('');
   const [processingFiles, setProcessingFiles] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
   const chatContainerRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const models = [
-    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', description: 'Best available - excellent intelligence and speed' },
+    const models = [
+    { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', description: 'Latest model - best performance and capabilities', badge: 'NEW' },
+    { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', description: 'Most powerful model for complex challenges', badge: 'PREMIUM' },
+    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', description: 'Excellent intelligence and speed' },
     { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Highest intelligence for complex analysis' },
     { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Good balance of performance and cost' },
     { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fastest and most cost-effective' }
@@ -81,11 +85,49 @@ export default function Home() {
     { value: '6000', label: 'Comprehensive Analysis', description: 'Full resilience report', time: '25s' },
     { value: '8000', label: 'Maximum Depth', description: 'Complete framework', time: '35s' }
   ];
-
-  // Auto-adjust token limit when model changes
+  // Fetch default model from environment on mount
   useEffect(() => {
-    if (parseInt(tokenLimit) > 4096 && model !== 'claude-3-5-sonnet-20241022') {
-      setTokenLimit('4000');
+    const fetchDefaultModel = async () => {
+      try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+          const data = await response.json();
+          const defaultModelId = data.defaultModel || 'claude-sonnet-4-20250514';
+          setDefaultModel(defaultModelId);
+          setModel(defaultModelId);
+        } else {
+          // Fallback to Claude Sonnet 4 if API fails
+          const fallbackModel = 'claude-sonnet-4-20250514';
+          setDefaultModel(fallbackModel);
+          setModel(fallbackModel);
+        }
+      } catch (error) {
+        // Fallback to Claude Sonnet 4 if fetch fails
+        const fallbackModel = 'claude-sonnet-4-20250514';
+        setDefaultModel(fallbackModel);
+        setModel(fallbackModel);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+    
+    fetchDefaultModel();
+  }, []);
+
+    // Auto-adjust token limit when model changes
+  useEffect(() => {
+    const modelTokenLimits = {
+      'claude-sonnet-4-20250514': 8000,
+      'claude-opus-4-20250514': 8000,
+      'claude-3-5-sonnet-20241022': 8000,
+      'claude-3-opus-20240229': 4096,
+      'claude-3-sonnet-20240229': 4096,
+      'claude-3-haiku-20240307': 4096
+    };
+    
+    const maxTokensForModel = modelTokenLimits[model] || 4096;
+    if (parseInt(tokenLimit) > maxTokensForModel) {
+      setTokenLimit(maxTokensForModel.toString());
     }
   }, [model, tokenLimit]);
 
@@ -297,8 +339,19 @@ What would you like to explore first?`;
       return;
     }
 
-    if (parseInt(tokenLimit) > 4096 && model !== 'claude-3-5-sonnet-20241022') {
-      setError('8K tokens only supported with Claude 3.5 Sonnet. Please select a different model or reduce token limit.');
+        // Validate token limit for selected model
+    const modelTokenLimits = {
+      'claude-sonnet-4-20250514': 8000,
+      'claude-opus-4-20250514': 8000,
+      'claude-3-5-sonnet-20241022': 8000,
+      'claude-3-opus-20240229': 4096,
+      'claude-3-sonnet-20240229': 4096,
+      'claude-3-haiku-20240307': 4096
+    };
+    
+    const maxTokensForModel = modelTokenLimits[model] || 4096;
+    if (parseInt(tokenLimit) > maxTokensForModel) {
+      setError(`Maximum ${maxTokensForModel} tokens supported for selected model. Please reduce token limit or choose a different model.`);
       return;
     }
 
@@ -1184,14 +1237,19 @@ What would you like to explore first?`;
                     {/* Action Button */}
                     <button
                       onClick={analyzeCompany}
-                      disabled={!companyName || loading}
+                      disabled={!companyName || loading || configLoading}
                       className="w-full group relative overflow-hidden bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 hover:from-emerald-700 hover:via-blue-700 hover:to-purple-700 text-white px-8 py-6 rounded-2xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50"
                     >
                       {/* Background Animation */}
                       <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
                       
                       <div className="relative z-10 flex items-center justify-center gap-4">
-                        {loading ? (
+                        {configLoading ? (
+                          <>
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <span>Loading configuration...</span>
+                          </>
+                        ) : loading ? (
                           <>
                             <Loader2 className="w-6 h-6 animate-spin" />
                             <span>Analyzing {companyName}...</span>
@@ -1233,17 +1291,47 @@ What would you like to explore first?`;
                         <div className="space-y-4">
                           <div>
                             <label className="block text-sm text-white/80 mb-2">AI Model</label>
-                            <select
-                              value={model}
-                              onChange={(e) => setModel(e.target.value)}
-                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition appearance-none cursor-pointer text-base"
-                            >
+                            <div className="space-y-2">
                               {models.map((m) => (
-                                <option key={m.id} value={m.id} className="bg-slate-800 text-white py-2">
-                                  {m.name} - {m.description}
-                                </option>
+                                <label
+                                  key={m.id}
+                                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                                    model === m.id 
+                                      ? 'bg-emerald-500/20 border-2 border-emerald-500 shadow-lg' 
+                                      : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20'
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="model"
+                                    value={m.id}
+                                    checked={model === m.id}
+                                    onChange={(e) => setModel(e.target.value)}
+                                    className="w-4 h-4 accent-emerald-500"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-white font-medium">{m.name}</span>
+                                      {m.badge && (
+                                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                                          m.badge === 'NEW' 
+                                            ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                                            : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                        }`}>
+                                          {m.badge}
+                                        </span>
+                                      )}
+                                      {m.id === defaultModel && (
+                                        <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
+                                          DEFAULT
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-white/60 mt-0.5">{m.description}</div>
+                                  </div>
+                                </label>
                               ))}
-                            </select>
+                            </div>
                           </div>
                         </div>
                       </div>
