@@ -199,24 +199,6 @@ export default function SharedReportPage({ params }) {
             </div>
           )}
 
-          {/* Call to Action */}
-          <div className="p-6 bg-gradient-to-r from-emerald-600/20 to-blue-600/20 rounded-xl border border-white/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold mb-2">Want to analyze this company yourself?</h3>
-                <p className="text-white/80 text-sm">
-                  Get fresh insights, interactive chat, and personalized analysis for {report?.companyName}.
-                </p>
-              </div>
-              <Link
-                href={`/?company=${encodeURIComponent(report?.companyName || '')}`}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-lg font-medium hover:from-emerald-700 hover:to-blue-700 transition-all whitespace-nowrap"
-              >
-                <Activity className="w-5 h-5" />
-                Analyze Now
-              </Link>
-            </div>
-          </div>
         </div>
 
         {/* Report Content */}
