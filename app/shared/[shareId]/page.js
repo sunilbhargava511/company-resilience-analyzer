@@ -172,14 +172,11 @@ export default function SharedReportPage({ params }) {
       <main className="max-w-6xl mx-auto px-6 py-4">
         {/* Report Header */}
         <div className="mb-4">
-          <div className="flex items-center gap-3 mb-4">
-            <Building2 className="w-8 h-8 text-emerald-400" />
-            <div>
-              <h1 className="text-3xl font-bold">{report?.companyName} Resilience Analysis</h1>
-              <p className="text-white/60 text-sm mt-1">
-                Generated on {new Date(report?.createdAt).toLocaleDateString()}
-              </p>
-            </div>
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold">{report?.companyName} Resilience Analysis</h1>
+            <p className="text-white/60 text-sm mt-1">
+              Generated on {new Date(report?.createdAt).toLocaleDateString()}
+            </p>
           </div>
           
 
