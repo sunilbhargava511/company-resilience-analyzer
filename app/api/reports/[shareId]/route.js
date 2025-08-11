@@ -1,6 +1,6 @@
 // app/api/reports/[shareId]/route.js - API route to retrieve shared reports
 import { NextResponse } from 'next/server';
-import { getReportByShareId } from '../../../../lib/database.js';
+import { getReportByShareId } from '../../../../lib/database';
 
 export async function GET(request, { params }) {
   try {

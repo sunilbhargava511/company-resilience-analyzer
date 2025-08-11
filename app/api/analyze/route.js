@@ -1,6 +1,6 @@
 // app/api/analyze/route.js - Enhanced with database caching and sharing
 import { NextResponse } from 'next/server';
-import { getCachedReport, saveReport } from '../../../lib/database.js';
+import { getCachedReport, saveReport } from '../../../lib/database';
 
 export async function POST(request) {
   try {

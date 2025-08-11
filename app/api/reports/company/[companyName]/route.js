@@ -1,6 +1,6 @@
 // app/api/reports/company/[companyName]/route.js - API route to get company reports
 import { NextResponse } from 'next/server';
-import { getLatestReportForCompany, getCompanyReportHistory } from '../../../../../lib/database.js';
+import { getLatestReportForCompany, getCompanyReportHistory } from '../../../../../lib/database';
 
 export async function GET(request, { params }) {
   try {

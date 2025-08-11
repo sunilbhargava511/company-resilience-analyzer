@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
   experimental: {
-    serverComponentsExternalPackages: []
+    serverComponentsExternalPackages: ['@supabase/supabase-js']
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -12,6 +11,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Environment variables validation
+  env: {
+    CUSTOM_BUILD_ENV: 'vercel'
+  }
 }
 
 module.exports = nextConfig
