@@ -56,7 +56,7 @@ export default function SharedReportPage({ params }) {
       .replace(/\\*\\*(.+?)\\*\\*/g, '<strong style="color: #f59e0b; font-weight: 600;">$1</strong>')
       .replace(/- (.+)/g, '<li style="margin: 0.5rem 0; color: #1f2937; line-height: 1.6;">$1</li>')
       .replace(/(?:\\r\\n|\\r|\\n)/g, '<br>')
-      .replace(/(<li[^>]*>.*?<\\/li>)/gs, '<ul style="list-style-type: disc; margin: 1rem 0; padding-left: 1.5rem; color: #374151;">$1</ul>')
+      .replace(/(<li[^>]*>.*?<\\/li>)/g, '<ul style="list-style-type: disc; margin: 1rem 0; padding-left: 1.5rem; color: #374151;">$1</ul>')
       .replace(/<\\/ul>\\s*<ul[^>]*>/g, '');
   };
 
