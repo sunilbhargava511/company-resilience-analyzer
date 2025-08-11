@@ -50,14 +50,14 @@ export default function SharedReportPage({ params }) {
     if (!text) return '';
     
     return text
-      .replace(/### ([^\\n]+)/g, '<h3 style="color: #10b981; font-weight: bold; font-size: 1.5rem; margin: 2rem 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">$1</h3>')
-      .replace(/## ([^\\n]+)/g, '<h2 style="color: #3b82f6; font-weight: bold; font-size: 1.75rem; margin: 2.5rem 0 1.5rem 0; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem;">$1</h2>')
-      .replace(/# ([^\\n]+)/g, '<h1 style="color: #8b5cf6; font-weight: bold; font-size: 2rem; margin: 3rem 0 2rem 0;">$1</h1>')
-      .replace(/\\*\\*(.+?)\\*\\*/g, '<strong style="color: #f59e0b; font-weight: 600;">$1</strong>')
+      .replace(/### ([^\n]+)/g, '<h3 style="color: #10b981; font-weight: bold; font-size: 1.5rem; margin: 2rem 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">$1</h3>')
+      .replace(/## ([^\n]+)/g, '<h2 style="color: #3b82f6; font-weight: bold; font-size: 1.75rem; margin: 2.5rem 0 1.5rem 0; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem;">$1</h2>')
+      .replace(/# ([^\n]+)/g, '<h1 style="color: #8b5cf6; font-weight: bold; font-size: 2rem; margin: 3rem 0 2rem 0;">$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #f59e0b; font-weight: 600;">$1</strong>')
       .replace(/- (.+)/g, '<li style="margin: 0.5rem 0; color: #1f2937; line-height: 1.6;">$1</li>')
-      .replace(/(?:\\r\\n|\\r|\\n)/g, '<br>')
-      .replace(/(<li[^>]*>.*?<\\/li>)/g, '<ul style="list-style-type: disc; margin: 1rem 0; padding-left: 1.5rem; color: #374151;">$1</ul>')
-      .replace(/<\\/ul>\\s*<ul[^>]*>/g, '');
+      .replace(/(?:\r\n|\r|\n)/g, '<br>')
+      .replace(/(<li[^>]*>.*?<\/li>)/g, '<ul style="list-style-type: disc; margin: 1rem 0; padding-left: 1.5rem; color: #374151;">$1</ul>')
+      .replace(/<\/ul>\s*<ul[^>]*>/g, '');
   };
 
   const copyShareUrl = () => {
