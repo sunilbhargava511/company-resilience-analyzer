@@ -1186,62 +1186,111 @@ What would you like to explore first?`;
         }
         
         // Handle tables with better detection and formatting
-        if (section.includes('|') && (section.includes('---') || section.includes('Metric'))) {
-          const tableLines = section.split('\n').filter(l => l.includes('|') && !l.match(/^[\s\-|]+$/));
+        // Check if this section contains a table
+        const hasTable = section.includes('|') && (section.includes('---') || section.includes('Metric') || section.includes('Category'));
+        
+        if (hasTable) {
+          // Mark that we're processing table content to skip rendering individual lines
+          const tableLines = section.split('\n').filter(l => l.includes('|'));
           
+          // Only process if we have valid table structure
           if (tableLines.length >= 2) {
-            // Extract headers (first line with |)
-            const headers = tableLines[0]
-              .split('|')
-              .filter(h => h.trim())
-              .map(h => h.trim().replace(/\*\*/g, ''));
+            // Find the header line (usually first line with |, or line before ---)
+            let headerIndex = 0;
+            let headers = [];
+            let rows = [];
             
-            // Extract rows (skip separator lines)
-            const rows = tableLines.slice(1)
-              .filter(line => !line.match(/^[\s\-|]+$/))
-              .map(line => 
-                line.split('|')
-                  .filter(cell => cell !== undefined)
-                  .map(cell => (cell || '').trim().replace(/\*\*/g, ''))
-              )
-              .filter(row => row.length > 0 && row.some(cell => cell.length > 0));
+            // Look for separator line to identify header
+            const separatorIndex = tableLines.findIndex(line => line.match(/^[\s\-|]+$/));
+            
+            if (separatorIndex > 0) {
+              // Header is line before separator
+              headers = tableLines[separatorIndex - 1]
+                .split('|')
+                .filter(h => h.trim())
+                .map(h => h.trim().replace(/\*\*/g, ''));
+              
+              // Rows are after separator
+              rows = tableLines.slice(separatorIndex + 1)
+                .filter(line => !line.match(/^[\s\-|]+$/))
+                .map(line => 
+                  line.split('|')
+                    .filter(cell => cell !== undefined)
+                    .map(cell => (cell || '').trim().replace(/\*\*/g, ''))
+                )
+                .filter(row => row.length > 0 && row.some(cell => cell.length > 0));
+            } else {
+              // No separator, assume first line is header
+              headers = tableLines[0]
+                .split('|')
+                .filter(h => h.trim())
+                .map(h => h.trim().replace(/\*\*/g, ''));
+              
+              rows = tableLines.slice(1)
+                .filter(line => !line.match(/^[\s\-|]+$/))
+                .map(line => 
+                  line.split('|')
+                    .filter(cell => cell !== undefined)
+                    .map(cell => (cell || '').trim().replace(/\*\*/g, ''))
+                )
+                .filter(row => row.length > 0 && row.some(cell => cell.length > 0));
+            }
             
             if (headers.length > 0 && rows.length > 0) {
               // Check if table fits on current page
               const tableHeight = (rows.length + 1) * 8;
-              if (yPosition + tableHeight > 270) {
+              if (yPosition + tableHeight > 250) {
                 pdf.addPage();
                 yPosition = 20;
               }
               
               // Use autoTable for better table rendering
-              // Check if autoTable is available, otherwise skip table rendering
               if (typeof pdf.autoTable === 'function') {
+                // Special handling for scoring breakdown table
+                const isScoreTable = headers.some(h => h.toLowerCase().includes('category') || h.toLowerCase().includes('score'));
+                
                 pdf.autoTable({
                   head: [headers],
                   body: rows,
                   startY: yPosition,
                   theme: 'grid',
                   headStyles: {
-                    fillColor: primaryColor,
+                    fillColor: isScoreTable ? secondaryColor : primaryColor,
                     textColor: [255, 255, 255],
                     fontStyle: 'bold',
                     fontSize: 9
                   },
                   bodyStyles: {
                     fontSize: 9,
-                    textColor: textColor
+                    textColor: textColor,
+                    cellPadding: 3
                   },
                   alternateRowStyles: {
-                    fillColor: [245, 247, 250]
+                    fillColor: [248, 250, 252]
+                  },
+                  footStyles: {
+                    fillColor: [240, 244, 248],
+                    textColor: textColor,
+                    fontStyle: 'bold'
                   },
                   margin: { left: 20, right: 20 },
-                  tableWidth: 'auto'
+                  tableWidth: 'auto',
+                  didParseCell: function(data) {
+                    // Bold the total row if present
+                    if (data.row.raw && data.row.raw[0] && 
+                        (data.row.raw[0].includes('Total') || data.row.raw[0].includes('**Total'))) {
+                      data.cell.styles.fontStyle = 'bold';
+                      data.cell.styles.fillColor = [240, 244, 248];
+                    }
+                  }
                 });
                 
                 yPosition = pdf.lastAutoTable.finalY + 10;
+                
+                // Skip processing the text lines of this table
+                continue;
               } else {
-                // Fallback: render table as text if autoTable is not available
+                // Fallback: render table as formatted text
                 pdf.setFontSize(9);
                 pdf.setFont(undefined, 'bold');
                 
@@ -1258,7 +1307,8 @@ What would you like to explore first?`;
                 }
                 
                 // Add separator line
-                pdf.setLineWidth(0.2);
+                pdf.setLineWidth(0.3);
+                pdf.setDrawColor(...lightGray);
                 pdf.line(20, yPosition, 190, yPosition);
                 yPosition += 5;
                 
@@ -1267,6 +1317,12 @@ What would you like to explore first?`;
                 for (const row of rows) {
                   const rowText = row.join(' | ');
                   const wrappedRow = pdf.splitTextToSize(rowText, 170);
+                  
+                  // Check for total row
+                  if (row[0] && row[0].toLowerCase().includes('total')) {
+                    pdf.setFont(undefined, 'bold');
+                  }
+                  
                   for (const line of wrappedRow) {
                     if (yPosition > 270) {
                       pdf.addPage();
@@ -1275,8 +1331,15 @@ What would you like to explore first?`;
                     pdf.text(line, 20, yPosition);
                     yPosition += 5;
                   }
+                  
+                  if (row[0] && row[0].toLowerCase().includes('total')) {
+                    pdf.setFont(undefined, 'normal');
+                  }
                 }
                 yPosition += 5;
+                
+                // Skip processing the text lines of this table
+                continue;
               }
             }
           }
