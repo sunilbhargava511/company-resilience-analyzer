@@ -817,9 +817,9 @@ What would you like to explore first?`;
     // Format bullet points
     html = html.replace(/^[-•]\s+(.+)$/gm, '<li class="mb-2 text-gray-700 dark:text-gray-300">$1</li>');
     
-    // Group consecutive list items
+    // Group consecutive list items (remove list-disc to avoid double bullets)
     html = html.replace(/(<li[^>]*>.*?<\/li>[\s\n]*)+/gs, (match) => {
-      return `<ul class="list-disc ml-6 mb-6 space-y-2">${match}</ul>`;
+      return `<ul class="ml-6 mb-6 space-y-2">${match}</ul>`;
     });
     
     // Format checkboxes
@@ -884,14 +884,85 @@ What would you like to explore first?`;
     }
   };
 
-  const downloadReport = () => {
-    const element = document.createElement('a');
-    const file = new Blob([result], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${companyName.replace(/\s+/g, '_')}_Resilience_Analysis_v${reportVersion}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const downloadReport = async () => {
+    try {
+      // Dynamically import PDF libraries to avoid SSR issues
+      const jsPDF = (await import('jspdf')).default;
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Get the analysis content element
+      const analysisContent = document.getElementById('analysis-content');
+      if (!analysisContent) {
+        alert('No analysis content to download');
+        return;
+      }
+
+      // Create a temporary wrapper to ensure proper styling
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'absolute';
+      wrapper.style.left = '-9999px';
+      wrapper.style.width = '800px';
+      wrapper.style.background = 'white';
+      wrapper.style.padding = '40px';
+      wrapper.innerHTML = analysisContent.innerHTML;
+      document.body.appendChild(wrapper);
+
+      // Generate canvas from the element
+      const canvas = await html2canvas(wrapper, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      // Remove temporary wrapper
+      document.body.removeChild(wrapper);
+
+      // Calculate PDF dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+
+      // Add content to PDF, handling multiple pages if needed
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Add metadata
+      pdf.setProperties({
+        title: `${companyName} Resilience Analysis`,
+        subject: 'Company Resilience Analysis Report',
+        author: 'Resilience Analyzer',
+        keywords: `resilience, analysis, ${companyName}`,
+        creator: 'Interactive Resilience Analyzer'
+      });
+
+      // Save the PDF
+      pdf.save(`${companyName.replace(/\s+/g, '_')}_Resilience_Analysis_v${reportVersion}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      // Fallback to text download
+      const element = document.createElement('a');
+      const file = new Blob([result], { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      element.download = `${companyName.replace(/\s+/g, '_')}_Resilience_Analysis_v${reportVersion}.txt`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      alert('PDF generation failed. Downloaded as text file instead.');
+    }
   };
 
   return (
