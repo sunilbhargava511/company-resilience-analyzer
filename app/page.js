@@ -894,6 +894,17 @@ What would you like to explore first?`;
       const lines = result.split('\n');
       let resilienceScore = '';
       
+      // Helper function to clean markdown from text
+      const cleanMarkdown = (text) => {
+        if (!text) return '';
+        return text
+          .replace(/\*\*/g, '')  // Remove bold markers
+          .replace(/\*/g, '')    // Remove single asterisks
+          .replace(/^#+\s*$/gm, '') // Remove empty headers
+          .replace(/^\s*#\s*$/gm, '') // Remove standalone #
+          .trim();
+      };
+      
       // Extract resilience score
       const scoreMatch = result.match(/(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*[\/\-]\s*10/i);
       if (scoreMatch) {
@@ -938,36 +949,49 @@ What would you like to explore first?`;
       pdf.text(`Version ${reportVersion} | ${new Date().toLocaleDateString()}`, 105, 35, { align: 'center' });
       
       // Add resilience score card if found
-      let yPosition = 50;
+      let yPosition = 55;
       if (resilienceScore) {
-        // Score background
+        // Enhanced score card with better styling
+        const cardHeight = 45;
         pdf.setFillColor(...lightGray);
-        pdf.roundedRect(20, yPosition, 170, 30, 5, 5, 'F');
+        pdf.roundedRect(20, yPosition, 170, cardHeight, 5, 5, 'F');
         
         // Score text
         pdf.setTextColor(...textColor);
-        pdf.setFontSize(24);
+        pdf.setFontSize(26);
         pdf.setFont(undefined, 'bold');
-        pdf.text(`Resilience Score: ${resilienceScore}/10`, 105, yPosition + 12, { align: 'center' });
+        pdf.text(`Resilience Score: ${resilienceScore}/10`, 105, yPosition + 14, { align: 'center' });
         
         // Score bar
         const scorePercent = (parseFloat(resilienceScore) / 10) * 100;
         pdf.setFillColor(229, 231, 235);
-        pdf.rect(40, yPosition + 18, 130, 6, 'F');
+        pdf.rect(40, yPosition + 22, 130, 8, 'F');
         
-        // Determine color based on score
-        if (parseFloat(resilienceScore) >= 8) {
+        // Determine color and label based on score
+        let scoreLabel = '';
+        const score = parseFloat(resilienceScore);
+        if (score >= 8) {
           pdf.setFillColor(16, 185, 129); // Green
-        } else if (parseFloat(resilienceScore) >= 6) {
+          scoreLabel = 'Highly Resilient';
+        } else if (score >= 6) {
           pdf.setFillColor(59, 130, 246); // Blue
-        } else if (parseFloat(resilienceScore) >= 4) {
+          scoreLabel = 'Strong Position';
+        } else if (score >= 4) {
           pdf.setFillColor(251, 146, 60); // Orange
+          scoreLabel = 'Moderate Risk';
         } else {
           pdf.setFillColor(239, 68, 68); // Red
+          scoreLabel = 'High Risk';
         }
-        pdf.rect(40, yPosition + 18, (130 * scorePercent) / 100, 6, 'F');
+        pdf.rect(40, yPosition + 22, (130 * scorePercent) / 100, 8, 'F');
         
-        yPosition += 40;
+        // Add score interpretation label
+        pdf.setFontSize(11);
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(scoreLabel, 105, yPosition + 38, { align: 'center' });
+        
+        yPosition += cardHeight + 15; // More spacing after score card
       }
       
       // Process content sections
@@ -981,6 +1005,9 @@ What would you like to explore first?`;
       
       for (const section of sections) {
         if (!section.trim()) continue;
+        
+        // Skip empty headers (just # with no content)
+        if (section.match(/^#{1,3}\s*$/)) continue;
         
         // Skip if we've already processed similar content (avoid duplicates)
         const sectionKey = section.substring(0, 100).replace(/[^a-zA-Z0-9]/g, '');
@@ -1010,10 +1037,9 @@ What would you like to explore first?`;
             pdf.setFont(undefined, 'bold');
             pdf.setTextColor(...primaryColor);
             
-            const headerText = headerMatch[1]
+            const headerText = cleanMarkdown(headerMatch[1]
               .replace(/[🔋⚠️🎯🚀📈💡🔮📊🏆💰🌟⭐]/g, '')
-              .replace(/^\d+\.\s*/, '') // Remove numbering
-              .trim();
+              .replace(/^\d+\.\s*/, ''));
             
             // Wrap long headers
             const wrappedHeader = pdf.splitTextToSize(headerText, 170);
@@ -1043,10 +1069,9 @@ What would you like to explore first?`;
             pdf.setFont(undefined, 'bold');
             pdf.setTextColor(...secondaryColor);
             
-            const headerText = headerMatch[1]
+            const headerText = cleanMarkdown(headerMatch[1]
               .replace(/[🔋⚠️🎯🚀📈💡🔮📊🏆💰🌟⭐]/g, '')
-              .replace(/^\d+\.\s*/, '')
-              .trim();
+              .replace(/^\d+\.\s*/, ''));
             
             pdf.text(headerText, 20, yPosition);
             yPosition += 8;
@@ -1082,7 +1107,7 @@ What would you like to explore first?`;
               yPosition = 20;
             }
             
-            const bulletText = line.replace(/^[\s\-•\*]+/, '').trim();
+            const bulletText = cleanMarkdown(line.replace(/^[\s\-•\*]+/, '').trim());
             
             // Skip empty bullets
             if (!bulletText) continue;
@@ -1147,7 +1172,7 @@ What would you like to explore first?`;
               yPosition += 2;
             } else {
               // Handle other bold text
-              const processedLine = line.replace(/\*\*/g, '');
+              const processedLine = cleanMarkdown(line);
               const wrappedText = pdf.splitTextToSize(processedLine, 170);
               
               const hasBold = line.includes('**');
@@ -1173,7 +1198,9 @@ What would you like to explore first?`;
           }
           // Handle regular text
           else {
-            const wrappedText = pdf.splitTextToSize(line, 170);
+            const cleanedLine = cleanMarkdown(line);
+            if (!cleanedLine) continue; // Skip empty lines after cleaning
+            const wrappedText = pdf.splitTextToSize(cleanedLine, 170);
             for (const wrappedLine of wrappedText) {
               if (yPosition > 270) {
                 pdf.addPage();
