@@ -888,67 +888,283 @@ What would you like to explore first?`;
     try {
       // Dynamically import PDF libraries to avoid SSR issues
       const jsPDF = (await import('jspdf')).default;
-      const html2canvas = (await import('html2canvas')).default;
+      await import('jspdf-autotable');
       
-      // Get the analysis content element
-      const analysisContent = document.getElementById('analysis-content');
-      if (!analysisContent) {
-        alert('No analysis content to download');
-        return;
+      // Parse the result text to extract structured data
+      const lines = result.split('\n');
+      let currentSection = '';
+      let content = [];
+      let resilienceScore = '';
+      
+      // Extract resilience score
+      const scoreMatch = result.match(/(?:Overall\s+)?Resilience\s+Score:?\s*(\d+(?:\.\d+)?)\s*[\/\-]\s*10/i);
+      if (scoreMatch) {
+        resilienceScore = scoreMatch[1];
       }
-
-      // Create a temporary wrapper to ensure proper styling
-      const wrapper = document.createElement('div');
-      wrapper.style.position = 'absolute';
-      wrapper.style.left = '-9999px';
-      wrapper.style.width = '800px';
-      wrapper.style.background = 'white';
-      wrapper.style.padding = '40px';
-      wrapper.innerHTML = analysisContent.innerHTML;
-      document.body.appendChild(wrapper);
-
-      // Generate canvas from the element
-      const canvas = await html2canvas(wrapper, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
+      
+      // Create PDF with proper settings
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
       });
-
-      // Remove temporary wrapper
-      document.body.removeChild(wrapper);
-
-      // Calculate PDF dimensions
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png');
-
-      // Add content to PDF, handling multiple pages if needed
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      // Add metadata
+      
+      // Set document properties
       pdf.setProperties({
         title: `${companyName} Resilience Analysis`,
         subject: 'Company Resilience Analysis Report',
-        author: 'Resilience Analyzer',
+        author: 'Interactive Resilience Analyzer',
         keywords: `resilience, analysis, ${companyName}`,
         creator: 'Interactive Resilience Analyzer'
       });
-
+      
+      // Define colors
+      const primaryColor = [52, 211, 153]; // Emerald
+      const secondaryColor = [59, 130, 246]; // Blue
+      const textColor = [31, 41, 55]; // Dark gray
+      const lightGray = [229, 231, 235];
+      
+      // Add header with gradient effect
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(0, 0, 210, 40, 'F');
+      
+      // Add title
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(28);
+      pdf.setFont(undefined, 'bold');
+      pdf.text(`${companyName}`, 105, 18, { align: 'center' });
+      pdf.setFontSize(16);
+      pdf.setFont(undefined, 'normal');
+      pdf.text('Resilience Analysis Report', 105, 28, { align: 'center' });
+      pdf.setFontSize(12);
+      pdf.text(`Version ${reportVersion} | ${new Date().toLocaleDateString()}`, 105, 35, { align: 'center' });
+      
+      // Add resilience score card if found
+      let yPosition = 50;
+      if (resilienceScore) {
+        // Score background
+        pdf.setFillColor(...lightGray);
+        pdf.roundedRect(20, yPosition, 170, 30, 5, 5, 'F');
+        
+        // Score text
+        pdf.setTextColor(...textColor);
+        pdf.setFontSize(24);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(`Resilience Score: ${resilienceScore}/10`, 105, yPosition + 12, { align: 'center' });
+        
+        // Score bar
+        const scorePercent = (parseFloat(resilienceScore) / 10) * 100;
+        pdf.setFillColor(229, 231, 235);
+        pdf.rect(40, yPosition + 18, 130, 6, 'F');
+        
+        // Determine color based on score
+        if (parseFloat(resilienceScore) >= 8) {
+          pdf.setFillColor(16, 185, 129); // Green
+        } else if (parseFloat(resilienceScore) >= 6) {
+          pdf.setFillColor(59, 130, 246); // Blue
+        } else if (parseFloat(resilienceScore) >= 4) {
+          pdf.setFillColor(251, 146, 60); // Orange
+        } else {
+          pdf.setFillColor(239, 68, 68); // Red
+        }
+        pdf.rect(40, yPosition + 18, (130 * scorePercent) / 100, 6, 'F');
+        
+        yPosition += 40;
+      }
+      
+      // Process content sections
+      pdf.setTextColor(...textColor);
+      pdf.setFont(undefined, 'normal');
+      pdf.setFontSize(11);
+      
+      // Parse and format the content
+      const sections = result.split(/(?=###?\s)/);
+      
+      for (const section of sections) {
+        if (!section.trim()) continue;
+        
+        // Check if we need a new page
+        if (yPosition > 250) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        // Handle section headers
+        if (section.startsWith('###')) {
+          const headerMatch = section.match(/###\s*(.+)/);
+          if (headerMatch) {
+            // Add some space before headers
+            yPosition += 5;
+            
+            pdf.setFontSize(14);
+            pdf.setFont(undefined, 'bold');
+            pdf.setTextColor(...primaryColor);
+            
+            const headerText = headerMatch[1].replace(/[🔋⚠️🎯🚀📈💡🔮📊]/g, '').trim();
+            pdf.text(headerText, 20, yPosition);
+            yPosition += 8;
+            
+            // Add underline
+            pdf.setDrawColor(...primaryColor);
+            pdf.setLineWidth(0.5);
+            pdf.line(20, yPosition - 2, 190, yPosition - 2);
+            yPosition += 5;
+          }
+        } else if (section.startsWith('##')) {
+          const headerMatch = section.match(/##\s*(.+)/);
+          if (headerMatch) {
+            yPosition += 8;
+            
+            pdf.setFontSize(16);
+            pdf.setFont(undefined, 'bold');
+            pdf.setTextColor(...secondaryColor);
+            
+            const headerText = headerMatch[1].replace(/[🔋⚠️🎯🚀📈💡🔮📊]/g, '').trim();
+            pdf.text(headerText, 20, yPosition);
+            yPosition += 10;
+          }
+        }
+        
+        // Handle bullet points and regular text
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(...textColor);
+        
+        const contentLines = section.split('\n').slice(1); // Skip the header line
+        for (const line of contentLines) {
+          if (!line.trim()) continue;
+          
+          // Check for page break
+          if (yPosition > 270) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          
+          // Handle bullet points
+          if (line.trim().startsWith('-') || line.trim().startsWith('•')) {
+            const bulletText = line.replace(/^[\s-•]+/, '').trim();
+            const wrappedText = pdf.splitTextToSize(bulletText, 160);
+            
+            // Add bullet
+            pdf.setFillColor(...textColor);
+            pdf.circle(25, yPosition - 1, 1, 'F');
+            
+            // Add text
+            for (let i = 0; i < wrappedText.length; i++) {
+              if (yPosition > 270) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              pdf.text(wrappedText[i], 30, yPosition);
+              yPosition += 5;
+            }
+            yPosition += 2;
+          }
+          // Handle bold text
+          else if (line.includes('**')) {
+            const boldPattern = /\*\*(.+?)\*\*/g;
+            let processedLine = line;
+            let hasBold = false;
+            
+            // Simple bold text handling
+            if (boldPattern.test(line)) {
+              hasBold = true;
+              processedLine = line.replace(/\*\*/g, '');
+            }
+            
+            const wrappedText = pdf.splitTextToSize(processedLine, 170);
+            
+            if (hasBold) {
+              pdf.setFont(undefined, 'bold');
+            }
+            
+            for (const wrappedLine of wrappedText) {
+              if (yPosition > 270) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              pdf.text(wrappedLine, 20, yPosition);
+              yPosition += 5;
+            }
+            
+            if (hasBold) {
+              pdf.setFont(undefined, 'normal');
+            }
+            yPosition += 2;
+          }
+          // Handle regular text
+          else {
+            const wrappedText = pdf.splitTextToSize(line, 170);
+            for (const wrappedLine of wrappedText) {
+              if (yPosition > 270) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              pdf.text(wrappedLine, 20, yPosition);
+              yPosition += 5;
+            }
+          }
+        }
+        
+        // Handle tables if present
+        if (section.includes('|') && section.includes('---')) {
+          // Simple table detection and rendering
+          const tableLines = section.split('\n').filter(l => l.includes('|'));
+          if (tableLines.length > 2) {
+            // Extract headers and rows
+            const headers = tableLines[0].split('|').filter(h => h.trim()).map(h => h.trim());
+            const rows = tableLines.slice(2).map(line => 
+              line.split('|').filter(cell => cell.trim()).map(cell => cell.trim())
+            );
+            
+            if (headers.length > 0 && rows.length > 0) {
+              // Check if table fits on current page
+              const tableHeight = (rows.length + 1) * 8;
+              if (yPosition + tableHeight > 270) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              
+              // Use autoTable for better table rendering
+              pdf.autoTable({
+                head: [headers],
+                body: rows,
+                startY: yPosition,
+                theme: 'grid',
+                headStyles: {
+                  fillColor: primaryColor,
+                  textColor: [255, 255, 255],
+                  fontStyle: 'bold',
+                  fontSize: 9
+                },
+                bodyStyles: {
+                  fontSize: 9,
+                  textColor: textColor
+                },
+                alternateRowStyles: {
+                  fillColor: [245, 247, 250]
+                },
+                margin: { left: 20, right: 20 },
+                tableWidth: 'auto'
+              });
+              
+              yPosition = pdf.lastAutoTable.finalY + 10;
+            }
+          }
+        }
+      }
+      
+      // Add footer to all pages
+      const pageCount = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(9);
+        pdf.setTextColor(156, 163, 175);
+        pdf.text(`Page ${i} of ${pageCount}`, 105, 287, { align: 'center' });
+        pdf.text('Interactive Resilience Analyzer', 20, 287);
+        pdf.text(new Date().toLocaleDateString(), 190, 287, { align: 'right' });
+      }
+      
       // Save the PDF
       pdf.save(`${companyName.replace(/\s+/g, '_')}_Resilience_Analysis_v${reportVersion}.pdf`);
     } catch (error) {
