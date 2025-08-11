@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { formatResult } from '../../../lib/formatReport';
 import { 
   ArrowLeft, 
   Clock, 
@@ -45,104 +46,6 @@ export default function SharedReportPage({ params }) {
     }
   }, [shareId]);
 
-  // Enhanced formatting function for better display
-  const formatResult = (text) => {
-    if (!text) return '';
-    
-    // First, let's clean up the text and handle tables
-    let formattedText = text;
-    
-    // Handle markdown tables
-    const tableRegex = /\|(.+?)\|\n\|[-\s|]+\|\n((?:\|.+?\|\n?)+)/gm;
-    formattedText = formattedText.replace(tableRegex, (match, header, rows) => {
-      const headerCells = header.split('|').map(cell => cell.trim()).filter(Boolean);
-      const rowLines = rows.trim().split('\n');
-      
-      let tableHtml = '<div style="overflow-x: auto; margin: 2rem 0;"><table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">';
-      
-      // Header
-      tableHtml += '<thead><tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">';
-      headerCells.forEach(cell => {
-        tableHtml += `<th style="padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.9rem;">${cell}</th>`;
-      });
-      tableHtml += '</tr></thead>';
-      
-      // Body
-      tableHtml += '<tbody>';
-      rowLines.forEach((row, index) => {
-        if (row.trim()) {
-          const cells = row.split('|').map(cell => cell.trim()).filter(Boolean);
-          const bgColor = index % 2 === 0 ? '#f8fafc' : '#ffffff';
-          tableHtml += `<tr style="background: ${bgColor}; border-bottom: 1px solid #e2e8f0;">`;
-          cells.forEach(cell => {
-            tableHtml += `<td style="padding: 12px 16px; border-right: 1px solid #e2e8f0; font-size: 0.85rem; line-height: 1.5;">${cell}</td>`;
-          });
-          tableHtml += '</tr>';
-        }
-      });
-      tableHtml += '</tbody></table></div>';
-      
-      return tableHtml;
-    });
-    
-    // Handle headers with proper hierarchy
-    formattedText = formattedText
-      .replace(/#### ([^\n]+)/g, '<h4 style="color: #7c3aed; font-weight: 700; font-size: 1.25rem; margin: 1.5rem 0 1rem 0; border-left: 4px solid #7c3aed; padding-left: 1rem;">$1</h4>')
-      .replace(/### ([^\n]+)/g, '<h3 style="color: #10b981; font-weight: 700; font-size: 1.5rem; margin: 2rem 0 1rem 0; display: flex; align-items: center;"><span style="background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">$1</span></h3>')
-      .replace(/## ([^\n]+)/g, '<h2 style="color: #3b82f6; font-weight: 700; font-size: 1.75rem; margin: 2.5rem 0 1.5rem 0; border-bottom: 3px solid #3b82f6; padding-bottom: 0.5rem; background: linear-gradient(135deg, #3b82f6, #1d4ed8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">$1</h2>')
-      .replace(/# ([^\n]+)/g, '<h1 style="color: #8b5cf6; font-weight: 800; font-size: 2.25rem; margin: 3rem 0 2rem 0; text-align: center; background: linear-gradient(135deg, #8b5cf6, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">$1</h1>');
-    
-    // Handle bold text with better styling
-    formattedText = formattedText.replace(/\*\*(.+?)\*\*/g, '<strong style="color: #dc2626; font-weight: 700; background: linear-gradient(135deg, #fef3c7, #fde68a); padding: 2px 6px; border-radius: 4px; display: inline-block; margin: 1px;">$1</strong>');
-    
-    // Handle paragraphs - convert double newlines to paragraph breaks
-    formattedText = formattedText.replace(/\n\n/g, '</p><p style="margin: 1rem 0; line-height: 1.7; color: #374151;">');
-    formattedText = '<p style="margin: 1rem 0; line-height: 1.7; color: #374151;">' + formattedText + '</p>';
-    
-    // Handle lists with better formatting
-    const lines = formattedText.split('\n');
-    let inList = false;
-    let listType = '';
-    const processedLines = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      if (line.match(/^[•\-\*]\s+(.+)/)) {
-        if (!inList) {
-          processedLines.push('<ul style="margin: 1rem 0; padding-left: 2rem; list-style-type: none;">');
-          inList = true;
-          listType = 'ul';
-        }
-        const content = line.replace(/^[•\-\*]\s+/, '');
-        processedLines.push(`<li style="margin: 0.5rem 0; padding-left: 0.5rem; position: relative; line-height: 1.6; color: #374151;"><span style="position: absolute; left: -1.5rem; color: #10b981; font-weight: bold;">•</span>${content}</li>`);
-      } else if (line.match(/^\d+\.\s+(.+)/)) {
-        if (!inList || listType !== 'ol') {
-          if (inList) processedLines.push(`</${listType}>`);
-          processedLines.push('<ol style="margin: 1rem 0; padding-left: 2rem; counter-reset: item;">');
-          inList = true;
-          listType = 'ol';
-        }
-        const content = line.replace(/^\d+\.\s+/, '');
-        processedLines.push(`<li style="margin: 0.5rem 0; padding-left: 0.5rem; counter-increment: item; position: relative; line-height: 1.6; color: #374151;"><span style="position: absolute; left: -2rem; color: #3b82f6; font-weight: bold;">\${item}.</span>${content}</li>`);
-      } else {
-        if (inList) {
-          processedLines.push(`</${listType}>`);
-          inList = false;
-          listType = '';
-        }
-        if (line) {
-          processedLines.push(line);
-        }
-      }
-    }
-    
-    if (inList) {
-      processedLines.push(`</${listType}>`);
-    }
-    
-    return processedLines.join('\n');
-  };
 
   const copyShareUrl = () => {
     navigator.clipboard.writeText(window.location.href);
