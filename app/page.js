@@ -888,7 +888,7 @@ What would you like to explore first?`;
     try {
       // Dynamically import PDF libraries to avoid SSR issues
       const jsPDF = (await import('jspdf')).default;
-      await import('jspdf-autotable');
+      const autoTable = (await import('jspdf-autotable')).default;
       
       // Parse the result text to extract structured data
       const lines = result.split('\n');
@@ -1126,29 +1126,69 @@ What would you like to explore first?`;
               }
               
               // Use autoTable for better table rendering
-              pdf.autoTable({
-                head: [headers],
-                body: rows,
-                startY: yPosition,
-                theme: 'grid',
-                headStyles: {
-                  fillColor: primaryColor,
-                  textColor: [255, 255, 255],
-                  fontStyle: 'bold',
-                  fontSize: 9
-                },
-                bodyStyles: {
-                  fontSize: 9,
-                  textColor: textColor
-                },
-                alternateRowStyles: {
-                  fillColor: [245, 247, 250]
-                },
-                margin: { left: 20, right: 20 },
-                tableWidth: 'auto'
-              });
-              
-              yPosition = pdf.lastAutoTable.finalY + 10;
+              // Check if autoTable is available, otherwise skip table rendering
+              if (typeof pdf.autoTable === 'function') {
+                pdf.autoTable({
+                  head: [headers],
+                  body: rows,
+                  startY: yPosition,
+                  theme: 'grid',
+                  headStyles: {
+                    fillColor: primaryColor,
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 9
+                  },
+                  bodyStyles: {
+                    fontSize: 9,
+                    textColor: textColor
+                  },
+                  alternateRowStyles: {
+                    fillColor: [245, 247, 250]
+                  },
+                  margin: { left: 20, right: 20 },
+                  tableWidth: 'auto'
+                });
+                
+                yPosition = pdf.lastAutoTable.finalY + 10;
+              } else {
+                // Fallback: render table as text if autoTable is not available
+                pdf.setFontSize(9);
+                pdf.setFont(undefined, 'bold');
+                
+                // Render headers
+                const headerText = headers.join(' | ');
+                const wrappedHeaders = pdf.splitTextToSize(headerText, 170);
+                for (const line of wrappedHeaders) {
+                  if (yPosition > 270) {
+                    pdf.addPage();
+                    yPosition = 20;
+                  }
+                  pdf.text(line, 20, yPosition);
+                  yPosition += 5;
+                }
+                
+                // Add separator line
+                pdf.setLineWidth(0.2);
+                pdf.line(20, yPosition, 190, yPosition);
+                yPosition += 5;
+                
+                // Render rows
+                pdf.setFont(undefined, 'normal');
+                for (const row of rows) {
+                  const rowText = row.join(' | ');
+                  const wrappedRow = pdf.splitTextToSize(rowText, 170);
+                  for (const line of wrappedRow) {
+                    if (yPosition > 270) {
+                      pdf.addPage();
+                      yPosition = 20;
+                    }
+                    pdf.text(line, 20, yPosition);
+                    yPosition += 5;
+                  }
+                }
+                yPosition += 5;
+              }
             }
           }
         }
