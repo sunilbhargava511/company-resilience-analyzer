@@ -55,13 +55,51 @@ export default function SharedReportPage({ params }) {
   const downloadReport = () => {
     if (!report) return;
     
-    const element = document.createElement('a');
-    const file = new Blob([report.analysisData], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${report.companyName.replace(/\\s+/g, '_')}_Shared_Analysis.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    // Get the formatted report content
+    const reportContent = document.querySelector('.prose');
+    if (!reportContent) return;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    // Write the content to the new window with print styles
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${report.companyName} Resilience Analysis</title>
+          <style>
+            @media print {
+              body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+              .no-print { display: none !important; }
+              .score-card { page-break-inside: avoid; }
+              h1, h2, h3 { page-break-after: avoid; }
+              table { page-break-inside: avoid; }
+              .prose { max-width: none !important; }
+            }
+            body { padding: 20px; line-height: 1.6; }
+            h1 { color: #1f2937; margin-bottom: 0.5rem; }
+            .generation-date { color: #6b7280; font-size: 0.875rem; margin-bottom: 2rem; }
+            ${document.querySelector('style') ? document.querySelector('style').innerHTML : ''}
+          </style>
+        </head>
+        <body>
+          <h1>${report.companyName} Resilience Analysis</h1>
+          <div class="generation-date">Generated on ${new Date(report.createdAt).toLocaleDateString()}</div>
+          ${reportContent.outerHTML}
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    
+    // Wait a moment for content to load, then print
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
 
   if (loading) {
@@ -136,41 +174,14 @@ export default function SharedReportPage({ params }) {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <Building2 className="w-8 h-8 text-emerald-400" />
-            <h1 className="text-3xl font-bold">{report?.companyName} Resilience Analysis</h1>
+            <div>
+              <h1 className="text-3xl font-bold">{report?.companyName} Resilience Analysis</h1>
+              <p className="text-white/60 text-sm mt-1">
+                Generated on {new Date(report?.createdAt).toLocaleDateString()}
+              </p>
+            </div>
           </div>
           
-          {/* Metadata */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="flex items-center gap-3 p-4 bg-white/10 rounded-xl border border-white/20">
-              {report?.isExpired ? (
-                <AlertCircle className="w-6 h-6 text-red-400" />
-              ) : (
-                <Clock className="w-6 h-6 text-yellow-400" />
-              )}
-              <div>
-                <div className="font-medium">Generated</div>
-                <div className="text-sm text-white/70">
-                  {new Date(report?.createdAt).toLocaleDateString()}
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 p-4 bg-white/10 rounded-xl border border-white/20">
-              <Activity className="w-6 h-6 text-blue-400" />
-              <div>
-                <div className="font-medium">Model</div>
-                <div className="text-sm text-white/70">{report?.modelUsed}</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 p-4 bg-white/10 rounded-xl border border-white/20">
-              <Sparkles className="w-6 h-6 text-purple-400" />
-              <div>
-                <div className="font-medium">Version</div>
-                <div className="text-sm text-white/70">v{report?.version}</div>
-              </div>
-            </div>
-          </div>
 
           {/* Expiration Warning */}
           {report?.isExpired && (
