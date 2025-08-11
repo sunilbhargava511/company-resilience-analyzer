@@ -1,9 +1,10 @@
-// app/api/analyze/route.js - Fixed version with proper error handling
+// app/api/analyze/route.js - Enhanced with database caching and sharing
 import { NextResponse } from 'next/server';
+import { getCachedReport, saveReport } from '../../../lib/database.js';
 
 export async function POST(request) {
   try {
-    const { companyName, model, tokenLimit, fileContext } = await request.json();
+    const { companyName, model, tokenLimit, fileContext, forceNew = false } = await request.json();
 
     if (!companyName) {
       return NextResponse.json(
@@ -38,6 +39,38 @@ export async function POST(request) {
         { error: `Maximum ${maxTokensForModel} tokens supported for ${model}. Please reduce token limit.` },
         { status: 400 }
       );
+    }
+
+    // Check for cached report (unless forceNew is true)
+    if (!forceNew) {
+      try {
+        const cachedReport = await getCachedReport(companyName);
+        if (cachedReport) {
+          // Return cached report with metadata
+          const cacheExpiresAt = new Date(cachedReport.created_at);
+          cacheExpiresAt.setMonth(cacheExpiresAt.getMonth() + 3);
+          
+          const shareUrl = `${request.headers.get('origin') || 'http://localhost:3000'}/shared/${cachedReport.share_id}`;
+          
+          return NextResponse.json({
+            success: true,
+            result: cachedReport.analysis_data,
+            metadata: {
+              shareId: cachedReport.share_id,
+              shareUrl: shareUrl,
+              isFromCache: true,
+              generatedAt: cachedReport.created_at,
+              modelUsed: cachedReport.model_used,
+              tokenLimit: cachedReport.token_limit,
+              cacheExpiresAt: cacheExpiresAt.toISOString(),
+              version: cachedReport.version
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error checking cache:', error);
+        // Continue with fresh analysis if cache check fails
+      }
     }
 
     // Rate limiting check (optional but recommended)
@@ -328,10 +361,50 @@ Please provide a comprehensive resilience evaluation following the format above.
       );
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      result: data.content[0].text 
-    });
+    // Save the new report to database
+    try {
+      const analysisResult = data.content[0].text;
+      const savedReport = await saveReport({
+        companyName,
+        analysisData: analysisResult,
+        modelUsed: model || process.env.DEFAULT_MODEL || 'claude-sonnet-4-20250514',
+        tokenLimit: parseInt(tokenLimit) || 4000,
+        fileContext
+      });
+
+      const shareUrl = `${request.headers.get('origin') || 'http://localhost:3000'}/shared/${savedReport.share_id}`;
+
+      return NextResponse.json({ 
+        success: true, 
+        result: analysisResult,
+        metadata: {
+          shareId: savedReport.share_id,
+          shareUrl: shareUrl,
+          isFromCache: false,
+          generatedAt: savedReport.created_at,
+          modelUsed: savedReport.model_used,
+          tokenLimit: savedReport.token_limit,
+          version: savedReport.version
+        }
+      });
+    } catch (saveError) {
+      console.error('Error saving report to database:', saveError);
+      // Still return the analysis even if save fails
+      return NextResponse.json({ 
+        success: true, 
+        result: data.content[0].text,
+        metadata: {
+          shareId: null,
+          shareUrl: null,
+          isFromCache: false,
+          generatedAt: new Date().toISOString(),
+          modelUsed: model || process.env.DEFAULT_MODEL || 'claude-sonnet-4-20250514',
+          tokenLimit: parseInt(tokenLimit) || 4000,
+          version: 1,
+          saveError: 'Failed to save to database'
+        }
+      });
+    }
 
   } catch (error) {
     console.error('Error in analyze API:', error);

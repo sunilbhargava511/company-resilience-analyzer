@@ -54,6 +54,9 @@ export default function Home() {
   const [tokenLimit, setTokenLimit] = useState('6000');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState('');
+  const [shareableUrl, setShareableUrl] = useState('');
+  const [reportMetadata, setReportMetadata] = useState(null);
+  const [forceNew, setForceNew] = useState(false);
   const [error, setError] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [defaultModel, setDefaultModel] = useState(null);
@@ -85,6 +88,46 @@ export default function Home() {
     { value: '6000', label: 'Comprehensive Analysis', description: 'Full resilience report', time: '25s' },
     { value: '8000', label: 'Maximum Depth', description: 'Complete framework', time: '35s' }
   ];
+  // Generate shareable URL
+  const generateShareableUrl = (companyName, analysisResult) => {
+    const data = {
+      company: companyName,
+      analysis: analysisResult,
+      timestamp: Date.now()
+    };
+    const encoded = btoa(JSON.stringify(data));
+    const url = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
+    setShareableUrl(url);
+    return url;
+  };
+
+  // Load shared analysis from URL
+  const loadSharedAnalysis = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shared = urlParams.get('shared');
+    if (shared) {
+      try {
+        const decoded = JSON.parse(atob(shared));
+        setCompanyName(decoded.company);
+        setResult(decoded.analysis);
+        setShareableUrl(window.location.href);
+      } catch (error) {
+        console.error('Error loading shared analysis:', error);
+      }
+    }
+  };
+
+  // Check for company parameter in URL and pre-fill
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const companyParam = urlParams.get('company');
+    if (companyParam) {
+      setCompanyName(decodeURIComponent(companyParam));
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // Fetch default model from environment on mount
   useEffect(() => {
     const fetchDefaultModel = async () => {
@@ -372,7 +415,8 @@ What would you like to explore first?`;
           companyName,
           model,
           tokenLimit,
-          fileContext: fileContext || null // Include uploaded file context
+          fileContext: fileContext || null, // Include uploaded file context
+          forceNew // Include force new analysis parameter
         })
       });
 
@@ -383,6 +427,12 @@ What would you like to explore first?`;
       }
 
       setResult(data.result);
+      setReportMetadata(data.metadata || null);
+      
+      // Set shareable URL if metadata is available
+      if (data.metadata && data.metadata.shareUrl) {
+        setShareableUrl(data.metadata.shareUrl);
+      }
     } catch (err) {
       setError(err.message || 'An error occurred while analyzing the company');
     } finally {
@@ -1084,146 +1134,30 @@ What would you like to explore first?`;
           }
         }
         
-        // Handle bullet points and regular text
-        pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(...textColor);
-        
-        const contentLines = section.split('\n').slice(1); // Skip the header line
-        for (const line of contentLines) {
-          if (!line.trim()) continue;
-          
-          // Check for page break with better logic
-          if (yPosition > 265) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-          
-          // Handle bullet points with better formatting
-          if (line.trim().startsWith('-') || line.trim().startsWith('•') || line.trim().startsWith('*')) {
-            // Check if bullet point would be orphaned
-            if (yPosition > 260) {
-              pdf.addPage();
-              yPosition = 20;
-            }
-            
-            const bulletText = cleanMarkdown(line.replace(/^[\s\-•\*]+/, '').trim());
-            
-            // Skip empty bullets
-            if (!bulletText) continue;
-            
-            const wrappedText = pdf.splitTextToSize(bulletText, 160);
-            
-            // Add bullet symbol
-            pdf.setFillColor(...textColor);
-            pdf.circle(25, yPosition - 1, 0.8, 'F');
-            
-            // Add text with consistent spacing
-            pdf.setFontSize(10);
-            for (let i = 0; i < wrappedText.length; i++) {
-              if (yPosition > 265) {
-                pdf.addPage();
-                yPosition = 20;
-              }
-              pdf.text(wrappedText[i], 32, yPosition);
-              yPosition += 4.5;
-            }
-            yPosition += 1.5;
-          }
-          // Handle bold text and key-value pairs
-          else if (line.includes('**') || line.includes(':')) {
-            // Check for key-value format
-            const kvMatch = line.match(/^\*\*([^*]+)\*\*:\s*(.+)$/);
-            
-            if (kvMatch) {
-              // Format as key-value pair
-              const [, key, value] = kvMatch;
-              
-              if (yPosition > 260) {
-                pdf.addPage();
-                yPosition = 20;
-              }
-              
-              // Key in bold
-              pdf.setFont(undefined, 'bold');
-              pdf.setFontSize(10);
-              const keyWidth = pdf.getTextWidth(key + ': ');
-              pdf.text(key + ': ', 20, yPosition);
-              
-              // Value in normal
-              pdf.setFont(undefined, 'normal');
-              const valueWrapped = pdf.splitTextToSize(value, 170 - keyWidth);
-              
-              // First line continues after key
-              if (valueWrapped[0]) {
-                pdf.text(valueWrapped[0], 20 + keyWidth, yPosition);
-                yPosition += 5;
-              }
-              
-              // Subsequent lines
-              for (let i = 1; i < valueWrapped.length; i++) {
-                if (yPosition > 265) {
-                  pdf.addPage();
-                  yPosition = 20;
-                }
-                pdf.text(valueWrapped[i], 20, yPosition);
-                yPosition += 5;
-              }
-              yPosition += 2;
-            } else {
-              // Handle other bold text
-              const processedLine = cleanMarkdown(line);
-              const wrappedText = pdf.splitTextToSize(processedLine, 170);
-              
-              const hasBold = line.includes('**');
-              if (hasBold) {
-                pdf.setFont(undefined, 'bold');
-              }
-              
-              pdf.setFontSize(10);
-              for (const wrappedLine of wrappedText) {
-                if (yPosition > 265) {
-                  pdf.addPage();
-                  yPosition = 20;
-                }
-                pdf.text(wrappedLine, 20, yPosition);
-                yPosition += 5;
-              }
-              
-              if (hasBold) {
-                pdf.setFont(undefined, 'normal');
-              }
-              yPosition += 1;
-            }
-          }
-          // Handle regular text
-          else {
-            const cleanedLine = cleanMarkdown(line);
-            if (!cleanedLine) continue; // Skip empty lines after cleaning
-            const wrappedText = pdf.splitTextToSize(cleanedLine, 170);
-            for (const wrappedLine of wrappedText) {
-              if (yPosition > 270) {
-                pdf.addPage();
-                yPosition = 20;
-              }
-              pdf.text(wrappedLine, 20, yPosition);
-              yPosition += 5;
-            }
-          }
-        }
-        
-        // Handle tables with better detection and formatting
-        // Check if this section contains a table
-        const hasTable = section.includes('|') && (section.includes('---') || section.includes('Metric') || section.includes('Category'));
+        // First, check if this section contains a table - handle tables BEFORE text processing
+        const hasTable = section.includes('|') && (
+          section.includes('---') || 
+          section.includes('Metric') || 
+          section.includes('Category') || 
+          section.includes('Score') || 
+          section.includes('Weight') ||
+          section.includes('Company') ||
+          section.includes('Total') ||
+          /\|\s*[^|]+\s*\|/.test(section) // Basic pipe table pattern
+        );
+        let tableProcessed = false;
         
         if (hasTable) {
-          // Mark that we're processing table content to skip rendering individual lines
           const tableLines = section.split('\n').filter(l => l.includes('|'));
           
           // Only process if we have valid table structure
           if (tableLines.length >= 2) {
-            // Find the header line (usually first line with |, or line before ---)
-            let headerIndex = 0;
+            // Check if we need a page break for the table
+            const estimatedTableHeight = (tableLines.length * 12) + 20; // Rough estimate
+            if (yPosition + estimatedTableHeight > 260) {
+              pdf.addPage();
+              yPosition = 20;
+            }
             let headers = [];
             let rows = [];
             
@@ -1235,7 +1169,7 @@ What would you like to explore first?`;
               headers = tableLines[separatorIndex - 1]
                 .split('|')
                 .filter(h => h.trim())
-                .map(h => h.trim().replace(/\*\*/g, ''));
+                .map(h => cleanMarkdown(h.trim()));
               
               // Rows are after separator
               rows = tableLines.slice(separatorIndex + 1)
@@ -1243,7 +1177,7 @@ What would you like to explore first?`;
                 .map(line => 
                   line.split('|')
                     .filter(cell => cell !== undefined)
-                    .map(cell => (cell || '').trim().replace(/\*\*/g, ''))
+                    .map(cell => cleanMarkdown((cell || '').trim()))
                 )
                 .filter(row => row.length > 0 && row.some(cell => cell.length > 0));
             } else {
@@ -1251,30 +1185,36 @@ What would you like to explore first?`;
               headers = tableLines[0]
                 .split('|')
                 .filter(h => h.trim())
-                .map(h => h.trim().replace(/\*\*/g, ''));
+                .map(h => cleanMarkdown(h.trim()));
               
               rows = tableLines.slice(1)
                 .filter(line => !line.match(/^[\s\-|]+$/))
                 .map(line => 
                   line.split('|')
                     .filter(cell => cell !== undefined)
-                    .map(cell => (cell || '').trim().replace(/\*\*/g, ''))
+                    .map(cell => cleanMarkdown((cell || '').trim()))
                 )
                 .filter(row => row.length > 0 && row.some(cell => cell.length > 0));
             }
             
             if (headers.length > 0 && rows.length > 0) {
+              // Ensure column consistency - pad rows to match header length
+              const maxColumns = Math.max(headers.length, ...rows.map(row => row.length));
+              headers = headers.concat(Array(maxColumns - headers.length).fill(''));
+              rows = rows.map(row => row.concat(Array(maxColumns - row.length).fill('')));
+              
               // Check if table fits on current page
-              const tableHeight = (rows.length + 1) * 8;
-              if (yPosition + tableHeight > 250) {
+              const tableHeight = (rows.length + 1) * 10;
+              if (yPosition + tableHeight > 240) {
                 pdf.addPage();
                 yPosition = 20;
               }
               
               // Use autoTable for better table rendering
               if (typeof pdf.autoTable === 'function') {
-                // Special handling for scoring breakdown table
+                // Special handling for different table types
                 const isScoreTable = headers.some(h => h.toLowerCase().includes('category') || h.toLowerCase().includes('score'));
+                const isMetricTable = headers.some(h => h.toLowerCase().includes('metric'));
                 
                 pdf.autoTable({
                   head: [headers],
@@ -1285,89 +1225,192 @@ What would you like to explore first?`;
                     fillColor: isScoreTable ? secondaryColor : primaryColor,
                     textColor: [255, 255, 255],
                     fontStyle: 'bold',
-                    fontSize: 9
+                    fontSize: 9,
+                    cellPadding: 4
                   },
                   bodyStyles: {
-                    fontSize: 9,
+                    fontSize: 8,
                     textColor: textColor,
-                    cellPadding: 3
+                    cellPadding: 3,
+                    overflow: 'linebreak',
+                    cellWidth: 'wrap'
                   },
+                  columnStyles: isMetricTable ? {
+                    0: { cellWidth: 40 }, // Metric column
+                    1: { cellWidth: 25 }, // Value column
+                    2: { cellWidth: 30 }, // Best-in-class column
+                    3: { cellWidth: 25 }, // Leader column
+                    4: { cellWidth: 'auto' } // Gap analysis column
+                  } : {},
                   alternateRowStyles: {
                     fillColor: [248, 250, 252]
                   },
-                  footStyles: {
-                    fillColor: [240, 244, 248],
-                    textColor: textColor,
-                    fontStyle: 'bold'
-                  },
                   margin: { left: 20, right: 20 },
                   tableWidth: 'auto',
+                  showHead: 'everyPage',
                   didParseCell: function(data) {
                     // Bold the total row if present
                     if (data.row.raw && data.row.raw[0] && 
-                        (data.row.raw[0].includes('Total') || data.row.raw[0].includes('**Total'))) {
+                        (data.row.raw[0].toLowerCase().includes('total'))) {
                       data.cell.styles.fontStyle = 'bold';
                       data.cell.styles.fillColor = [240, 244, 248];
+                    }
+                    
+                    // Handle multi-line content in cells
+                    if (data.cell.text && data.cell.text.length > 60) {
+                      data.cell.styles.cellWidth = 'wrap';
                     }
                   }
                 });
                 
-                yPosition = pdf.lastAutoTable.finalY + 10;
+                yPosition = pdf.lastAutoTable.finalY + 15; // Better spacing after tables
+                tableProcessed = true;
+              }
+            }
+          }
+        }
+        
+        // Always process text (but skip table lines within the text processing)
+        {
+          // Handle bullet points and regular text
+          pdf.setFontSize(10);
+          pdf.setFont(undefined, 'normal');
+          pdf.setTextColor(...textColor);
+          
+          const contentLines = section.split('\\n').slice(1); // Skip the header line
+          for (const line of contentLines) {
+            if (!line.trim()) continue;
+            
+            // Skip lines that are part of tables - enhanced detection
+            if (line.includes('|')) {
+              // Skip table separator lines (contain dashes)
+              if (line.match(/^[\\s\\-|]+$/)) continue;
+              // Skip lines with multiple pipes (actual table content)
+              if (line.split('|').length > 2) continue;
+              // Skip table header/content patterns
+              if (line.match(/\\|\\s*[^|]+\\s*\\|/)) continue;
+            }
+            
+            // Check for page break with better logic
+            if (yPosition > 265) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            
+            // Handle bullet points with better formatting
+            if (line.trim().startsWith('-') || line.trim().startsWith('•') || line.trim().startsWith('*')) {
+              // Check if bullet point would be orphaned
+              if (yPosition > 260) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              
+              const bulletText = cleanMarkdown(line.replace(/^[\\s\\-•\\*]+/, '').trim());
+              
+              // Skip empty bullets
+              if (!bulletText) continue;
+              
+              const wrappedText = pdf.splitTextToSize(bulletText, 160);
+              
+              // Add bullet symbol
+              pdf.setFillColor(...textColor);
+              pdf.circle(25, yPosition - 1, 0.8, 'F');
+              
+              // Add text with consistent spacing
+              pdf.setFontSize(10);
+              for (let i = 0; i < wrappedText.length; i++) {
+                if (yPosition > 265) {
+                  pdf.addPage();
+                  yPosition = 20;
+                }
+                pdf.text(wrappedText[i], 32, yPosition);
+                yPosition += 4.5;
+              }
+              yPosition += 1.5;
+            }
+            // Handle bold text and key-value pairs
+            else if (line.includes('**') || line.includes(':')) {
+              // Check for key-value format
+              const kvMatch = line.match(/^\\*\\*([^*]+)\\*\\*:\\s*(.+)$/);
+              
+              if (kvMatch) {
+                // Format as key-value pair
+                const [, key, value] = kvMatch;
                 
-                // Skip processing the text lines of this table
-                continue;
-              } else {
-                // Fallback: render table as formatted text
-                pdf.setFontSize(9);
+                if (yPosition > 260) {
+                  pdf.addPage();
+                  yPosition = 20;
+                }
+                
+                // Key in bold
                 pdf.setFont(undefined, 'bold');
+                pdf.setFontSize(10);
+                const keyWidth = pdf.getTextWidth(key + ': ');
+                pdf.text(key + ': ', 20, yPosition);
                 
-                // Render headers
-                const headerText = headers.join(' | ');
-                const wrappedHeaders = pdf.splitTextToSize(headerText, 170);
-                for (const line of wrappedHeaders) {
-                  if (yPosition > 270) {
-                    pdf.addPage();
-                    yPosition = 20;
-                  }
-                  pdf.text(line, 20, yPosition);
+                // Value in normal
+                pdf.setFont(undefined, 'normal');
+                const valueWrapped = pdf.splitTextToSize(cleanMarkdown(value), 170 - keyWidth);
+                
+                // First line continues after key
+                if (valueWrapped[0]) {
+                  pdf.text(valueWrapped[0], 20 + keyWidth, yPosition);
                   yPosition += 5;
                 }
                 
-                // Add separator line
-                pdf.setLineWidth(0.3);
-                pdf.setDrawColor(...lightGray);
-                pdf.line(20, yPosition, 190, yPosition);
-                yPosition += 5;
-                
-                // Render rows
-                pdf.setFont(undefined, 'normal');
-                for (const row of rows) {
-                  const rowText = row.join(' | ');
-                  const wrappedRow = pdf.splitTextToSize(rowText, 170);
-                  
-                  // Check for total row
-                  if (row[0] && row[0].toLowerCase().includes('total')) {
-                    pdf.setFont(undefined, 'bold');
+                // Subsequent lines
+                for (let i = 1; i < valueWrapped.length; i++) {
+                  if (yPosition > 265) {
+                    pdf.addPage();
+                    yPosition = 20;
                   }
-                  
-                  for (const line of wrappedRow) {
-                    if (yPosition > 270) {
-                      pdf.addPage();
-                      yPosition = 20;
-                    }
-                    pdf.text(line, 20, yPosition);
-                    yPosition += 5;
-                  }
-                  
-                  if (row[0] && row[0].toLowerCase().includes('total')) {
-                    pdf.setFont(undefined, 'normal');
-                  }
+                  pdf.text(valueWrapped[i], 20, yPosition);
+                  yPosition += 5;
                 }
-                yPosition += 5;
+                yPosition += 2;
+              } else {
+                // Handle other bold text
+                const processedLine = cleanMarkdown(line);
+                if (!processedLine) continue;
                 
-                // Skip processing the text lines of this table
-                continue;
+                const wrappedText = pdf.splitTextToSize(processedLine, 170);
+                
+                const hasBold = line.includes('**');
+                if (hasBold) {
+                  pdf.setFont(undefined, 'bold');
+                }
+                
+                pdf.setFontSize(10);
+                for (const wrappedLine of wrappedText) {
+                  if (yPosition > 265) {
+                    pdf.addPage();
+                    yPosition = 20;
+                  }
+                  pdf.text(wrappedLine, 20, yPosition);
+                  yPosition += 5;
+                }
+                
+                if (hasBold) {
+                  pdf.setFont(undefined, 'normal');
+                }
+                yPosition += 1;
               }
+            }
+            // Handle regular text
+            else {
+              const cleanedLine = cleanMarkdown(line);
+              if (!cleanedLine) continue; // Skip empty lines after cleaning
+              
+              const wrappedText = pdf.splitTextToSize(cleanedLine, 170);
+              for (const wrappedLine of wrappedText) {
+                if (yPosition > 270) {
+                  pdf.addPage();
+                  yPosition = 20;
+                }
+                pdf.text(wrappedLine, 20, yPosition);
+                yPosition += 5;
+              }
+              yPosition += 1;
             }
           }
         }
@@ -1740,6 +1783,23 @@ What would you like to explore first?`;
                       </div>
                     )}
 
+                    {/* Force New Analysis Toggle */}
+                    <div className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20">
+                      <div className="flex flex-col">
+                        <span className="text-white font-medium">Force New Analysis</span>
+                        <span className="text-white/60 text-sm">Skip cached reports and generate fresh analysis</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={forceNew}
+                          onChange={(e) => setForceNew(e.target.checked)}
+                        />
+                        <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-emerald-500/50 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                      </label>
+                    </div>
+
                     {/* Action Button */}
                     <button
                       onClick={analyzeCompany}
@@ -1941,6 +2001,69 @@ What would you like to explore first?`;
             </div>
           </div>
           
+          {/* Report Metadata and Share Section */}
+          {reportMetadata && (
+            <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Cache Status */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="flex items-center gap-3 mb-4">
+                  {reportMetadata.isFromCache ? (
+                    <Clock className="w-6 h-6 text-yellow-400" />
+                  ) : (
+                    <Sparkles className="w-6 h-6 text-green-400" />
+                  )}
+                  <h3 className="text-lg font-semibold text-white">
+                    {reportMetadata.isFromCache ? 'Cached Analysis' : 'Fresh Analysis'}
+                  </h3>
+                </div>
+                <div className="space-y-2 text-sm text-white/80">
+                  <div>Generated: {new Date(reportMetadata.generatedAt).toLocaleDateString()}</div>
+                  <div>Model: {reportMetadata.modelUsed}</div>
+                  <div>Version: {reportMetadata.version}</div>
+                  {reportMetadata.cacheExpiresAt && (
+                    <div>Cache expires: {new Date(reportMetadata.cacheExpiresAt).toLocaleDateString()}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Share Options */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="flex items-center gap-3 mb-4">
+                  <Share2 className="w-6 h-6 text-blue-400" />
+                  <h3 className="text-lg font-semibold text-white">Share Analysis</h3>
+                </div>
+                <div className="space-y-3">
+                  {reportMetadata.shareUrl && (
+                    <div>
+                      <label className="block text-sm text-white/80 mb-2">Shareable Link</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={reportMetadata.shareUrl}
+                          readOnly
+                          className="flex-1 px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(reportMetadata.shareUrl);
+                            // You could add a toast notification here
+                            alert('Link copied to clipboard!');
+                          }}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="text-xs text-white/60">
+                    Share this analysis with others via the permanent link above.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Main results content with enhanced styling */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
             <div 

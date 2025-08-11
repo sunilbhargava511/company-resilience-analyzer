@@ -11,10 +11,12 @@
     "setup": "cp .env.example .env.local && echo 'Created .env.local from .env.example. Please add your API key.'"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.263.1",
+    "nanoid": "^5.0.0",
     "next": "14.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
