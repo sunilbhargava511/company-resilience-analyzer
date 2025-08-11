@@ -169,9 +169,9 @@ export default function SharedReportPage({ params }) {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-4">
         {/* Report Header */}
-        <div className="mb-8">
+        <div className="mb-4">
           <div className="flex items-center gap-3 mb-4">
             <Building2 className="w-8 h-8 text-emerald-400" />
             <div>
