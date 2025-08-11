@@ -892,8 +892,6 @@ What would you like to explore first?`;
       
       // Parse the result text to extract structured data
       const lines = result.split('\n');
-      let currentSection = '';
-      let content = [];
       let resilienceScore = '';
       
       // Extract resilience score
@@ -977,51 +975,87 @@ What would you like to explore first?`;
       pdf.setFont(undefined, 'normal');
       pdf.setFontSize(11);
       
-      // Parse and format the content
-      const sections = result.split(/(?=###?\s)/);
+      // Parse content more intelligently to avoid duplicates
+      let processedSections = new Set();
+      const sections = result.split(/(?=#{2,3}\s)/);
       
       for (const section of sections) {
         if (!section.trim()) continue;
         
-        // Check if we need a new page
-        if (yPosition > 250) {
+        // Skip if we've already processed similar content (avoid duplicates)
+        const sectionKey = section.substring(0, 100).replace(/[^a-zA-Z0-9]/g, '');
+        if (processedSections.has(sectionKey)) continue;
+        processedSections.add(sectionKey);
+        
+        // Check if we need a new page - be more conservative with page breaks
+        if (yPosition > 240) {
           pdf.addPage();
           yPosition = 20;
         }
         
-        // Handle section headers
+        // Handle section headers with better spacing
         if (section.startsWith('###')) {
           const headerMatch = section.match(/###\s*(.+)/);
           if (headerMatch) {
-            // Add some space before headers
-            yPosition += 5;
+            // Ensure enough space for header (avoid orphaned headers)
+            if (yPosition > 230) {
+              pdf.addPage();
+              yPosition = 20;
+            }
             
-            pdf.setFontSize(14);
+            // Add space before subsection headers
+            yPosition += 8;
+            
+            pdf.setFontSize(13);
             pdf.setFont(undefined, 'bold');
             pdf.setTextColor(...primaryColor);
             
-            const headerText = headerMatch[1].replace(/[🔋⚠️🎯🚀📈💡🔮📊]/g, '').trim();
-            pdf.text(headerText, 20, yPosition);
-            yPosition += 8;
+            const headerText = headerMatch[1]
+              .replace(/[🔋⚠️🎯🚀📈💡🔮📊🏆💰🌟⭐]/g, '')
+              .replace(/^\d+\.\s*/, '') // Remove numbering
+              .trim();
             
-            // Add underline
-            pdf.setDrawColor(...primaryColor);
-            pdf.setLineWidth(0.5);
-            pdf.line(20, yPosition - 2, 190, yPosition - 2);
-            yPosition += 5;
+            // Wrap long headers
+            const wrappedHeader = pdf.splitTextToSize(headerText, 170);
+            for (const line of wrappedHeader) {
+              pdf.text(line, 20, yPosition);
+              yPosition += 6;
+            }
+            
+            // Add subtle underline
+            pdf.setDrawColor(...lightGray);
+            pdf.setLineWidth(0.3);
+            pdf.line(20, yPosition - 1, 190, yPosition - 1);
+            yPosition += 6;
           }
         } else if (section.startsWith('##')) {
           const headerMatch = section.match(/##\s*(.+)/);
           if (headerMatch) {
-            yPosition += 8;
+            // Major section - consider new page for clean breaks
+            if (yPosition > 200) {
+              pdf.addPage();
+              yPosition = 20;
+            } else {
+              yPosition += 10;
+            }
             
-            pdf.setFontSize(16);
+            pdf.setFontSize(15);
             pdf.setFont(undefined, 'bold');
             pdf.setTextColor(...secondaryColor);
             
-            const headerText = headerMatch[1].replace(/[🔋⚠️🎯🚀📈💡🔮📊]/g, '').trim();
+            const headerText = headerMatch[1]
+              .replace(/[🔋⚠️🎯🚀📈💡🔮📊🏆💰🌟⭐]/g, '')
+              .replace(/^\d+\.\s*/, '')
+              .trim();
+            
             pdf.text(headerText, 20, yPosition);
-            yPosition += 10;
+            yPosition += 8;
+            
+            // Add prominent underline for major sections
+            pdf.setDrawColor(...secondaryColor);
+            pdf.setLineWidth(0.5);
+            pdf.line(20, yPosition - 1, 190, yPosition - 1);
+            yPosition += 6;
           }
         }
         
@@ -1034,63 +1068,108 @@ What would you like to explore first?`;
         for (const line of contentLines) {
           if (!line.trim()) continue;
           
-          // Check for page break
-          if (yPosition > 270) {
+          // Check for page break with better logic
+          if (yPosition > 265) {
             pdf.addPage();
             yPosition = 20;
           }
           
-          // Handle bullet points
-          if (line.trim().startsWith('-') || line.trim().startsWith('•')) {
-            const bulletText = line.replace(/^[\s-•]+/, '').trim();
+          // Handle bullet points with better formatting
+          if (line.trim().startsWith('-') || line.trim().startsWith('•') || line.trim().startsWith('*')) {
+            // Check if bullet point would be orphaned
+            if (yPosition > 260) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            
+            const bulletText = line.replace(/^[\s\-•\*]+/, '').trim();
+            
+            // Skip empty bullets
+            if (!bulletText) continue;
+            
             const wrappedText = pdf.splitTextToSize(bulletText, 160);
             
-            // Add bullet
+            // Add bullet symbol
             pdf.setFillColor(...textColor);
-            pdf.circle(25, yPosition - 1, 1, 'F');
+            pdf.circle(25, yPosition - 1, 0.8, 'F');
             
-            // Add text
+            // Add text with consistent spacing
+            pdf.setFontSize(10);
             for (let i = 0; i < wrappedText.length; i++) {
-              if (yPosition > 270) {
+              if (yPosition > 265) {
                 pdf.addPage();
                 yPosition = 20;
               }
-              pdf.text(wrappedText[i], 30, yPosition);
-              yPosition += 5;
+              pdf.text(wrappedText[i], 32, yPosition);
+              yPosition += 4.5;
             }
-            yPosition += 2;
+            yPosition += 1.5;
           }
-          // Handle bold text
-          else if (line.includes('**')) {
-            const boldPattern = /\*\*(.+?)\*\*/g;
-            let processedLine = line;
-            let hasBold = false;
+          // Handle bold text and key-value pairs
+          else if (line.includes('**') || line.includes(':')) {
+            // Check for key-value format
+            const kvMatch = line.match(/^\*\*([^*]+)\*\*:\s*(.+)$/);
             
-            // Simple bold text handling
-            if (boldPattern.test(line)) {
-              hasBold = true;
-              processedLine = line.replace(/\*\*/g, '');
-            }
-            
-            const wrappedText = pdf.splitTextToSize(processedLine, 170);
-            
-            if (hasBold) {
-              pdf.setFont(undefined, 'bold');
-            }
-            
-            for (const wrappedLine of wrappedText) {
-              if (yPosition > 270) {
+            if (kvMatch) {
+              // Format as key-value pair
+              const [, key, value] = kvMatch;
+              
+              if (yPosition > 260) {
                 pdf.addPage();
                 yPosition = 20;
               }
-              pdf.text(wrappedLine, 20, yPosition);
-              yPosition += 5;
-            }
-            
-            if (hasBold) {
+              
+              // Key in bold
+              pdf.setFont(undefined, 'bold');
+              pdf.setFontSize(10);
+              const keyWidth = pdf.getTextWidth(key + ': ');
+              pdf.text(key + ': ', 20, yPosition);
+              
+              // Value in normal
               pdf.setFont(undefined, 'normal');
+              const valueWrapped = pdf.splitTextToSize(value, 170 - keyWidth);
+              
+              // First line continues after key
+              if (valueWrapped[0]) {
+                pdf.text(valueWrapped[0], 20 + keyWidth, yPosition);
+                yPosition += 5;
+              }
+              
+              // Subsequent lines
+              for (let i = 1; i < valueWrapped.length; i++) {
+                if (yPosition > 265) {
+                  pdf.addPage();
+                  yPosition = 20;
+                }
+                pdf.text(valueWrapped[i], 20, yPosition);
+                yPosition += 5;
+              }
+              yPosition += 2;
+            } else {
+              // Handle other bold text
+              const processedLine = line.replace(/\*\*/g, '');
+              const wrappedText = pdf.splitTextToSize(processedLine, 170);
+              
+              const hasBold = line.includes('**');
+              if (hasBold) {
+                pdf.setFont(undefined, 'bold');
+              }
+              
+              pdf.setFontSize(10);
+              for (const wrappedLine of wrappedText) {
+                if (yPosition > 265) {
+                  pdf.addPage();
+                  yPosition = 20;
+                }
+                pdf.text(wrappedLine, 20, yPosition);
+                yPosition += 5;
+              }
+              
+              if (hasBold) {
+                pdf.setFont(undefined, 'normal');
+              }
+              yPosition += 1;
             }
-            yPosition += 2;
           }
           // Handle regular text
           else {
@@ -1106,16 +1185,26 @@ What would you like to explore first?`;
           }
         }
         
-        // Handle tables if present
-        if (section.includes('|') && section.includes('---')) {
-          // Simple table detection and rendering
-          const tableLines = section.split('\n').filter(l => l.includes('|'));
-          if (tableLines.length > 2) {
-            // Extract headers and rows
-            const headers = tableLines[0].split('|').filter(h => h.trim()).map(h => h.trim());
-            const rows = tableLines.slice(2).map(line => 
-              line.split('|').filter(cell => cell.trim()).map(cell => cell.trim())
-            );
+        // Handle tables with better detection and formatting
+        if (section.includes('|') && (section.includes('---') || section.includes('Metric'))) {
+          const tableLines = section.split('\n').filter(l => l.includes('|') && !l.match(/^[\s\-|]+$/));
+          
+          if (tableLines.length >= 2) {
+            // Extract headers (first line with |)
+            const headers = tableLines[0]
+              .split('|')
+              .filter(h => h.trim())
+              .map(h => h.trim().replace(/\*\*/g, ''));
+            
+            // Extract rows (skip separator lines)
+            const rows = tableLines.slice(1)
+              .filter(line => !line.match(/^[\s\-|]+$/))
+              .map(line => 
+                line.split('|')
+                  .filter(cell => cell !== undefined)
+                  .map(cell => (cell || '').trim().replace(/\*\*/g, ''))
+              )
+              .filter(row => row.length > 0 && row.some(cell => cell.length > 0));
             
             if (headers.length > 0 && rows.length > 0) {
               // Check if table fits on current page
