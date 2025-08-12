@@ -201,7 +201,7 @@ export default function SharedReportPage({ params }) {
         {/* Report Content */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 lg:p-12">
           <div 
-            className="prose prose-lg max-w-none dark:prose-invert"
+            className="prose prose-base max-w-none text-gray-900 dark:text-gray-100"
             dangerouslySetInnerHTML={{ __html: formatResult(report?.analysisData || '') }}
           />
         </div>
